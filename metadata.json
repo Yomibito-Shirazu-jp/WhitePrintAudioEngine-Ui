@@ -1,0 +1,5 @@
+{
+  "name": "Audio Analysis Engine",
+  "description": "BS.1770-4 Compliant Physical Audio Extraction and Analysis Dashboard",
+  "requestFramePermissions": []
+}
