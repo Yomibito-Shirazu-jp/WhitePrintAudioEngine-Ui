@@ -43,8 +43,6 @@ export interface PhysicalSection {
   end_sec: number;
   avg_lufs: number;
   avg_width: number;
-  song_structure: string;
-  context_info: string;
 }
 
 export interface DetectedProblem {
@@ -56,7 +54,6 @@ export interface DetectedProblem {
 export interface AnalysisResult {
   track_identity: TrackIdentity;
   whole_track_metrics: WholeTrackMetrics;
-  structural_flow: string;
   time_series_circuit_envelopes: TimeSeriesCircuitEnvelopes;
   physical_sections: PhysicalSection[];
   detected_problems: DetectedProblem[];

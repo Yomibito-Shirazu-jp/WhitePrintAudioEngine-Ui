@@ -187,7 +187,7 @@ export interface DeliberationOutput {
   errors: DeliberationError[];
   opinions: SageOpinion[];
   adopted_params: AdoptedParams;
-  dynamic_mastering_sections: DynamicMasteringSection[];
+  dynamic_mastering_sections?: DynamicMasteringSection[];
   deliberation_score: number;
   deliberation_score_detail: DeliberationScoreDetail;
   target_lufs: number;

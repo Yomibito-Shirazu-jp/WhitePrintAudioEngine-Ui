@@ -13,7 +13,7 @@ interface ResultsDashboardProps {
 
 export default function ResultsDashboard({ data, onRunDeliberation }: ResultsDashboardProps) {
   const [viewMode, setViewMode] = useState<'visual' | 'json'>('visual');
-  const { track_identity, whole_track_metrics, structural_flow, time_series_circuit_envelopes, physical_sections, detected_problems } = data;
+  const { track_identity, whole_track_metrics, time_series_circuit_envelopes, physical_sections, detected_problems } = data;
 
   // Prepare chart data
   const chartData = useMemo(() => {
@@ -175,12 +175,11 @@ export default function ResultsDashboard({ data, onRunDeliberation }: ResultsDas
                     className="h-full border-r border-zinc-800 last:border-r-0 bg-zinc-900/50 hover:bg-zinc-800 transition-colors flex items-center justify-center group relative cursor-crosshair"
                   >
                     <span className="text-[10px] font-mono text-zinc-500 group-hover:text-zinc-300 truncate px-1">
-                      {section.song_structure || `SEC_${idx}`}
+                      {`SEC_${idx}`}
                     </span>
                     {/* Tooltip */}
                     <div className="absolute bottom-full mb-2 hidden group-hover:block bg-zinc-800 text-xs font-mono p-2 rounded whitespace-nowrap z-10 border border-zinc-700 shadow-xl">
-                      {section.song_structure} ({section.start_sec}s - {section.end_sec}s)<br/>
-                      {section.context_info}<br/>
+                      SEC_{idx} ({section.start_sec}s - {section.end_sec}s)<br/>
                       Avg LUFS: {section.avg_lufs}<br/>
                       Avg Width: {section.avg_width}
                     </div>
@@ -241,22 +240,14 @@ export default function ResultsDashboard({ data, onRunDeliberation }: ResultsDas
               <h3 className="text-xs font-mono text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
                 <ListMusic className="w-4 h-4" /> Physical_Sections_Context
               </h3>
-              {structural_flow && (
-                <div className="mb-4 p-3 bg-zinc-900 rounded border border-zinc-800 font-mono text-xs text-zinc-300 overflow-x-auto whitespace-nowrap">
-                  <span className="text-zinc-500 mr-2">FLOW:</span> {structural_flow}
-                </div>
-              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {physical_sections.map((sec, idx) => (
                   <div key={idx} className="flex flex-col p-3 bg-zinc-900/50 border border-zinc-800 rounded-lg hover:bg-zinc-800/50 transition-colors">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-mono text-zinc-500">{sec.start_sec.toFixed(1)}s - {sec.end_sec.toFixed(1)}s</span>
                       <span className="text-sm font-mono font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
-                        {sec.song_structure || 'UNKNOWN'}
+                        {`SEC_${idx}`}
                       </span>
-                    </div>
-                    <div className="text-xs text-zinc-400 mb-2">
-                      {sec.context_info}
                     </div>
                     <div className="flex justify-between text-xs font-mono text-zinc-400 mt-auto pt-2 border-t border-zinc-800/50">
                       <span>LUFS: <span className="text-zinc-200">{sec.avg_lufs.toFixed(1)}</span></span>

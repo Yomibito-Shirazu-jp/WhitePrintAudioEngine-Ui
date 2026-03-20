@@ -1,25 +1,48 @@
 import type { DeliberationOutput } from '@/types/deliberation';
 import type { MasteringResult } from '@/types/mastering';
+import { postMasterBinary } from '@/lib/api-client';
 
-export async function runMasteringMock(deliberation: DeliberationOutput): Promise<MasteringResult> {
-  // Simulate DSP processing time
-  await new Promise((resolve) => setTimeout(resolve, 6000));
+export async function runMastering(
+  audioUrl: string,
+  deliberation: DeliberationOutput,
+): Promise<MasteringResult> {
+  const { blob, headers } = await postMasterBinary({
+    audio_url: audioUrl,
+    route: 'dsp_only',
+    manual_params: deliberation.adopted_params,
+    target_lufs: deliberation.target_lufs,
+    target_true_peak: deliberation.target_true_peak,
+  });
+
+  const downloadUrl = URL.createObjectURL(blob);
+
+  let metrics: MasteringResult['metrics'] = {
+    lufs_before: 0,
+    lufs_after: deliberation.target_lufs,
+    true_peak_before: 0,
+    true_peak_after: deliberation.target_true_peak,
+    dynamic_range_after: 0,
+    convergence_loops: 0,
+    gain_adjustment_db: 0,
+    target_lufs: deliberation.target_lufs,
+    target_true_peak: deliberation.target_true_peak,
+    engine_version: 'v2_14stage',
+  };
+
+  try {
+    const metricsHeader = headers['X-Metrics'];
+    if (metricsHeader) {
+      const parsed = JSON.parse(metricsHeader);
+      metrics = { ...metrics, ...parsed };
+    }
+  } catch {
+    // X-Metrics header missing or unparseable — use defaults
+  }
 
   return {
     job_id: crypto.randomUUID(),
     status: 'success',
-    metrics: {
-      lufs_before: -18.4,
-      lufs_after: deliberation.target_lufs,
-      true_peak_before: -3.2,
-      true_peak_after: deliberation.target_true_peak,
-      dynamic_range_after: 8.5,
-      convergence_loops: 12,
-      gain_adjustment_db: 4.2,
-      target_lufs: deliberation.target_lufs,
-      target_true_peak: deliberation.target_true_peak,
-      engine_version: 'v2_14stage',
-    },
-    download_url: '#', // Placeholder for actual download URL
+    metrics,
+    download_url: downloadUrl,
   };
 }

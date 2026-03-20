@@ -10,8 +10,8 @@ import DeliberationDashboard from '@/components/deliberation-dashboard';
 import MasteringScreen from '@/components/mastering-screen';
 import MasteringDashboard from '@/components/mastering-dashboard';
 import { analyzeAudio } from '@/lib/audio-analysis';
-import { runDeliberationMock } from '@/lib/deliberation';
-import { runMasteringMock } from '@/lib/mastering';
+import { runDeliberation } from '@/lib/deliberation';
+import { runMastering } from '@/lib/mastering';
 import type { AnalysisResult } from '@/types/audio';
 import type { DeliberationOutput } from '@/types/deliberation';
 import type { MasteringResult } from '@/types/mastering';
@@ -24,12 +24,12 @@ export default function Home() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleUpload = async (file: File) => {
+  const handleSubmit = async (url: string) => {
     setAppState('analyzing');
     setError(null);
-    setAudioUrl(URL.createObjectURL(file));
+    setAudioUrl(url);
     try {
-      const result = await analyzeAudio(file);
+      const result = await analyzeAudio(url);
       setAnalysisResult(result);
       setAppState('results');
     } catch (err) {
@@ -49,11 +49,11 @@ export default function Home() {
   };
 
   const handleRunDeliberation = async () => {
-    if (!analysisResult) return;
+    if (!analysisResult || !audioUrl) return;
     setAppState('deliberating');
     setError(null);
     try {
-      const result = await runDeliberationMock(analysisResult);
+      const result = await runDeliberation(audioUrl);
       setDeliberationResult(result);
       setAppState('deliberation_results');
     } catch (err) {
@@ -64,11 +64,11 @@ export default function Home() {
   };
 
   const handleRunMastering = async () => {
-    if (!deliberationResult) return;
+    if (!deliberationResult || !audioUrl) return;
     setAppState('mastering');
     setError(null);
     try {
-      const result = await runMasteringMock(deliberationResult);
+      const result = await runMastering(audioUrl, deliberationResult);
       setMasteringResult(result);
       setAppState('mastering_results');
     } catch (err) {
@@ -123,7 +123,7 @@ export default function Home() {
               transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
               className="absolute inset-0 flex items-center justify-center p-6"
             >
-              <UploadScreen onUpload={handleUpload} error={error} />
+              <UploadScreen onSubmit={handleSubmit} error={error} />
             </motion.div>
           )}
 

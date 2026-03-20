@@ -142,7 +142,7 @@ export default function DeliberationDashboard({ data, onRunMastering }: Delibera
               <Layers className="w-4 h-4" /> Dynamic_Mastering_Sections
             </h3>
             <div className="space-y-4">
-              {data.dynamic_mastering_sections.map((section, index) => (
+              {(data.dynamic_mastering_sections ?? []).map((section, index) => (
                 <div key={index} className="bg-zinc-950 border border-zinc-800 rounded-xl p-5">
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-3">
