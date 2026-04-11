@@ -59,9 +59,14 @@ export default function MasteringScreen() {
           <span>•</span>
           <span className="text-zinc-400 tabular-nums">{Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, '0')}</span>
         </div>
-        {elapsed > 60 && (
+        {elapsed > 30 && (
           <p className="text-[10px] text-zinc-600 font-mono mt-1">
             Processing audio with self-correction — this may take 2-5 minutes
+          </p>
+        )}
+        {elapsed > 60 && (
+          <p className="text-[10px] text-red-400/70 font-mono mt-0.5">
+            ⚠ Do not close this tab. Mastering runs in your browser session.
           </p>
         )}
       </div>
