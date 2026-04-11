@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import JsonLd from '@/components/seo/json-ld';
+import CheckoutButton from '@/components/marketing/checkout-button';
 
 export const metadata: Metadata = {
   title: 'Pricing — AI Audio Mastering Plans',
@@ -26,7 +27,8 @@ const plans = [
       'Metrics dashboard',
     ],
     cta: 'Start Free',
-    href: '/signup',
+    href: '/app',
+    checkoutKey: null,
     highlighted: false,
     badge: null,
   },
@@ -46,8 +48,9 @@ const plans = [
       '90-day analysis history',
       'Email support',
     ],
-    cta: '14-day free trial',
+    cta: 'Subscribe with USDT',
     href: '/signup?plan=standard',
+    checkoutKey: 'standard',
     highlighted: false,
     badge: null,
   },
@@ -69,8 +72,9 @@ const plans = [
       'Unlimited analysis history',
       'Priority support',
     ],
-    cta: '14-day free trial',
+    cta: 'Subscribe with USDT',
     href: '/signup?plan=pro',
+    checkoutKey: 'pro',
     highlighted: true,
     badge: 'Popular',
   },
@@ -91,8 +95,9 @@ const plans = [
       'Dedicated support + SLA',
       'SSO / team management',
     ],
-    cta: 'Contact Sales',
+    cta: 'Subscribe with USDT',
     href: '/contact',
+    checkoutKey: 'api',
     highlighted: false,
     badge: 'B2B',
   },
@@ -116,6 +121,7 @@ const plans = [
     ],
     cta: 'Contact Sales',
     href: '/contact',
+    checkoutKey: null,
     highlighted: false,
     badge: 'Enterprise',
   },
@@ -225,16 +231,24 @@ export default function PricingPage() {
                   </li>
                 ))}
               </ul>
-              <Link
-                href={plan.href}
-                className={`mt-6 block text-center py-2.5 rounded-lg font-medium text-sm transition-colors ${
-                  plan.highlighted
-                    ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
-                    : 'border border-zinc-700 hover:border-zinc-500 text-zinc-300 hover:text-white'
-                }`}
-              >
-                {plan.cta}
-              </Link>
+              {plan.checkoutKey ? (
+                <CheckoutButton
+                  planKey={plan.checkoutKey}
+                  label={plan.cta}
+                  highlighted={plan.highlighted}
+                />
+              ) : (
+                <Link
+                  href={plan.href}
+                  className={`mt-6 block text-center py-2.5 rounded-lg font-medium text-sm transition-colors ${
+                    plan.highlighted
+                      ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                      : 'border border-zinc-700 hover:border-zinc-500 text-zinc-300 hover:text-white'
+                  }`}
+                >
+                  {plan.cta}
+                </Link>
+              )}
             </div>
           ))}
         </div>
