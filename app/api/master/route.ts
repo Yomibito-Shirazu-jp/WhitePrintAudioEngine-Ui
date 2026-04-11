@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 
 const CONCERTMASTER_URL = process.env.CONCERTMASTER_URL || 'http://localhost:8000';
 const CONCERTMASTER_API_KEY = process.env.CONCERTMASTER_API_KEY || '';
+
+// Free plan limits (no billing record = free)
+const FREE_TRACKS_LIMIT = 3;
 
 export async function POST(request: NextRequest) {
   if (!CONCERTMASTER_API_KEY) {
@@ -13,6 +17,48 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
+    const route = body.route as string | undefined;
+
+    // Check usage limits for mastering routes (dsp_only and full)
+    // Analysis and deliberation are free/unlimited
+    const isMasteringRoute = !route || route === 'dsp_only' || route === 'full';
+
+    // Usage check — wrapped in try-catch so billing failures never block mastering
+    if (isMasteringRoute) {
+      try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (user) {
+          const { data: billing } = await supabase
+            .from('billing')
+            .select('plan, tracks_used, tracks_limit, period_end')
+            .eq('user_id', user.id)
+            .single();
+
+          const tracksLimit = billing?.tracks_limit ?? FREE_TRACKS_LIMIT;
+          const tracksUsed = billing?.tracks_used ?? 0;
+
+          if (billing?.period_end && new Date(billing.period_end) < new Date()) {
+            if (tracksUsed >= FREE_TRACKS_LIMIT) {
+              return NextResponse.json(
+                { error: 'Your subscription has expired. Please renew to continue mastering.' },
+                { status: 402 },
+              );
+            }
+          } else if (tracksUsed >= tracksLimit) {
+            return NextResponse.json(
+              { error: `Monthly mastering limit reached (${tracksUsed}/${tracksLimit}). Upgrade your plan for more.` },
+              { status: 429 },
+            );
+          }
+        }
+        // Guest users pass through — no limit enforcement for MVP
+      } catch (err) {
+        // Billing check failed (e.g. Supabase unreachable) — allow request to proceed
+        console.error('Usage check failed, allowing request:', err);
+      }
+    }
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 300_000);
@@ -44,6 +90,12 @@ export async function POST(request: NextRequest) {
 
     if (contentType.includes('audio/')) {
       const audioBuffer = await response.arrayBuffer();
+
+      // Increment usage for successful mastering
+      if (isMasteringRoute) {
+        await incrementUsage(request);
+      }
+
       return new NextResponse(audioBuffer, {
         status: response.status,
         headers: {
@@ -66,6 +118,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Increment usage for successful mastering (JSON response variant)
+    if (isMasteringRoute && response.ok) {
+      await incrementUsage(request);
+    }
+
     return NextResponse.json(data);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown proxy error';
@@ -73,5 +130,39 @@ export async function POST(request: NextRequest) {
       { error: `Failed to reach backend: ${message}` },
       { status: 502 }
     );
+  }
+}
+
+async function incrementUsage(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Increment tracks_used in billing
+    const { data: billing } = await supabase
+      .from('billing')
+      .select('id, tracks_used')
+      .eq('user_id', user.id)
+      .single();
+
+    if (billing) {
+      await supabase
+        .from('billing')
+        .update({ tracks_used: (billing.tracks_used || 0) + 1, updated_at: new Date().toISOString() })
+        .eq('id', billing.id);
+    } else {
+      // Create free-tier billing record
+      await supabase
+        .from('billing')
+        .insert({
+          user_id: user.id,
+          plan: 'free',
+          tracks_used: 1,
+          tracks_limit: FREE_TRACKS_LIMIT,
+        });
+    }
+  } catch (err) {
+    console.error('Failed to increment usage:', err);
   }
 }

@@ -12,7 +12,9 @@ export default function SiteHeader({ children }: SiteHeaderProps) {
 
   const navItems = [
     { href: '/app', label: 'DASHBOARD' },
+    { href: '/app/history', label: 'HISTORY' },
     { href: '/developers/docs', label: 'API_DOCS' },
+    { href: '/app/settings', label: 'SETTINGS' },
   ];
 
   return (
