@@ -11,10 +11,12 @@ interface UploadScreenProps {
 }
 
 const PROVIDER_HINTS = [
-  { name: 'Google Drive', hint: 'Share \u2192 Anyone with the link \u2192 Copy link' },
-  { name: 'Dropbox', hint: 'Share \u2192 Copy link (change ?dl=0 to ?dl=1 for direct download)' },
-  { name: 'OneDrive', hint: 'Share \u2192 Anyone with the link \u2192 Copy link' },
-  { name: 'S3 / GCS', hint: 'Use a pre-signed URL or public object URL' },
+  { name: 'Suno', hint: 'Paste the song page URL — we auto-extract the audio' },
+  { name: 'SoundCloud', hint: 'Paste the track page URL — we auto-extract the stream' },
+  { name: 'Google Drive', hint: 'Share → Anyone with the link → Copy link' },
+  { name: 'Dropbox', hint: 'Share → Copy link (auto-converted to direct download)' },
+  { name: 'OneDrive', hint: 'Share → Anyone with the link → Copy link' },
+  { name: 'Direct URL', hint: 'Any HTTPS link to WAV, FLAC, AIFF, or MP3' },
 ];
 
 function isValidAudioUrl(url: string): boolean {
@@ -96,7 +98,7 @@ export default function UploadScreen({ onSubmit, error }: UploadScreenProps) {
                 onChange={(e) => setUrl(e.target.value)}
                 onKeyDown={handleKeyDown}
                 onPaste={handlePaste}
-                placeholder="https://drive.google.com/... or https://dropbox.com/..."
+                placeholder="https://suno.com/s/... or https://drive.google.com/..."
                 className="w-full bg-transparent text-zinc-100 font-mono text-sm placeholder:text-zinc-600 focus:outline-none"
                 autoFocus
               />
