@@ -235,26 +235,56 @@ export default function ResultsDashboard({ data, onRunDeliberation }: ResultsDas
               </div>
             </div>
 
-            {/* Physical Sections Context */}
+            {/* Physical Sections Context — enriched with time-series data */}
             <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-5 lg:col-span-2">
               <h3 className="text-xs font-mono text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
                 <ListMusic className="w-4 h-4" /> Physical_Sections_Context
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {physical_sections.map((sec, idx) => (
-                  <div key={idx} className="flex flex-col p-3 bg-zinc-900/50 border border-zinc-800 rounded-lg hover:bg-zinc-800/50 transition-colors">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-mono text-zinc-500">{sec.start_sec.toFixed(1)}s - {sec.end_sec.toFixed(1)}s</span>
-                      <span className="text-sm font-mono font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
-                        {`SEC_${idx}`}
-                      </span>
+              <div className="space-y-3">
+                {physical_sections.map((sec, idx) => {
+                  const res = time_series_circuit_envelopes.resolution_sec || 1;
+                  const startIdx = Math.floor(sec.start_sec / res);
+                  const endIdx = Math.min(Math.ceil(sec.end_sec / res), time_series_circuit_envelopes.lufs.length);
+                  const slice = <T,>(arr: T[]) => arr.slice(startIdx, endIdx);
+                  const avg = (arr: number[]) => {
+                    const s = slice(arr);
+                    return s.length > 0 ? s.reduce((a, b) => a + b, 0) / s.length : 0;
+                  };
+
+                  const crest = avg(time_series_circuit_envelopes.crest_db);
+                  const sub = avg(time_series_circuit_envelopes.sub_ratio);
+                  const bass = avg(time_series_circuit_envelopes.bass_ratio);
+                  const brightness = avg(time_series_circuit_envelopes.spectral_brightness);
+                  const transient = avg(time_series_circuit_envelopes.transient_sharpness);
+                  const duration = sec.end_sec - sec.start_sec;
+
+                  return (
+                    <div key={idx} className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-mono font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+                            SEC_{idx}
+                          </span>
+                          <span className="text-xs font-mono text-zinc-500">
+                            {sec.start_sec.toFixed(1)}s — {sec.end_sec.toFixed(1)}s
+                          </span>
+                          <span className="text-[10px] font-mono text-zinc-600">
+                            ({duration.toFixed(0)}s)
+                          </span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 md:grid-cols-7 gap-2">
+                        <SectionMetric label="LUFS" value={sec.avg_lufs.toFixed(1)} warn={sec.avg_lufs > -12} />
+                        <SectionMetric label="WIDTH" value={sec.avg_width.toFixed(3)} />
+                        <SectionMetric label="CREST" value={crest.toFixed(1)} unit="dB" />
+                        <SectionMetric label="SUB" value={(sub * 100).toFixed(1)} unit="%" warn={sub > 0.4} />
+                        <SectionMetric label="BASS" value={(bass * 100).toFixed(1)} unit="%" />
+                        <SectionMetric label="BRIGHT" value={brightness.toFixed(3)} />
+                        <SectionMetric label="TRANS" value={transient.toFixed(3)} />
+                      </div>
                     </div>
-                    <div className="flex justify-between text-xs font-mono text-zinc-400 mt-auto pt-2 border-t border-zinc-800/50">
-                      <span>LUFS: <span className="text-zinc-200">{sec.avg_lufs.toFixed(1)}</span></span>
-                      <span>WIDTH: <span className="text-zinc-200">{sec.avg_width.toFixed(3)}</span></span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -279,6 +309,17 @@ function MetricBox({ label, value, unit = '', highlight = 'normal' }: { label: s
         'text-zinc-200'
       }`}>
         {value} <span className="text-xs font-normal opacity-50">{unit}</span>
+      </div>
+    </div>
+  );
+}
+
+function SectionMetric({ label, value, unit = '', warn = false }: { label: string; value: string; unit?: string; warn?: boolean }) {
+  return (
+    <div className={`px-2 py-1.5 rounded text-center border ${warn ? 'border-amber-500/30 bg-amber-500/5' : 'border-zinc-800/50 bg-zinc-950'}`}>
+      <div className="text-[9px] font-mono text-zinc-600 uppercase">{label}</div>
+      <div className={`text-xs font-mono font-medium ${warn ? 'text-amber-400' : 'text-zinc-200'}`}>
+        {value}{unit && <span className="text-zinc-600 text-[9px] ml-0.5">{unit}</span>}
       </div>
     </div>
   );

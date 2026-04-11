@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { Link2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion } from 'framer-motion';
+import GdriveGuideModal, { isGdriveUrl, isGdriveGuideDismissed } from '@/components/gdrive-guide-modal';
 
 interface UploadScreenProps {
   onSubmit: (url: string) => void;
@@ -29,6 +30,13 @@ export default function UploadScreen({ onSubmit, error }: UploadScreenProps) {
   const [url, setUrl] = useState('');
   const [showHints, setShowHints] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [showGdriveGuide, setShowGdriveGuide] = useState(false);
+
+  const submitUrl = useCallback(() => {
+    const trimmed = url.trim();
+    setValidationError(null);
+    onSubmit(trimmed);
+  }, [url, onSubmit]);
 
   const handleSubmit = useCallback(() => {
     const trimmed = url.trim();
@@ -38,6 +46,11 @@ export default function UploadScreen({ onSubmit, error }: UploadScreenProps) {
     }
     if (!isValidAudioUrl(trimmed)) {
       setValidationError('Invalid URL. Must start with https:// or http://');
+      return;
+    }
+    // Show Google Drive guide on first use
+    if (isGdriveUrl(trimmed) && !isGdriveGuideDismissed()) {
+      setShowGdriveGuide(true);
       return;
     }
     setValidationError(null);
@@ -135,6 +148,15 @@ export default function UploadScreen({ onSubmit, error }: UploadScreenProps) {
         <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-zinc-700 opacity-50 m-2" />
         <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-zinc-700 opacity-50 m-2" />
       </div>
+
+      <GdriveGuideModal
+        open={showGdriveGuide}
+        onConfirm={() => {
+          setShowGdriveGuide(false);
+          submitUrl();
+        }}
+        onClose={() => setShowGdriveGuide(false)}
+      />
 
       {displayError && (
         <motion.div
