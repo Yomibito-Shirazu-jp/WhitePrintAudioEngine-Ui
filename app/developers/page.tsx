@@ -99,7 +99,7 @@ export default function DevelopersPage() {
               <span className="ml-2 text-xs text-zinc-500 font-mono">cURL</span>
             </div>
             <pre className="p-6 text-sm font-mono text-emerald-400 overflow-x-auto">
-{`curl -X POST https://api.whiteprint.audio/api/v1/jobs/master \\
+{`curl -X POST https://concertmaster.aimastering.tech/api/v1/jobs/master \\
   -H "X-Api-Key: your-api-key" \\
   -H "Content-Type: application/json" \\
   -d '{

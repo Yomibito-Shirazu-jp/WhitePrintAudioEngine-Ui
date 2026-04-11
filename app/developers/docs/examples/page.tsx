@@ -12,7 +12,7 @@ const examples = [
     code: `import requests
 
 API_KEY = "your-api-key"
-BASE_URL = "https://api.whiteprint.audio"
+BASE_URL = "https://concertmaster.aimastering.tech"
 
 # Full mastering pipeline
 response = requests.post(
@@ -43,7 +43,7 @@ print(f"Elapsed: {response.headers.get('X-Elapsed-Ms')}ms")`,
     code: `import fs from 'fs';
 
 const API_KEY = 'your-api-key';
-const BASE_URL = 'https://api.whiteprint.audio';
+const BASE_URL = 'https://concertmaster.aimastering.tech';
 
 const response = await fetch(\`\${BASE_URL}/api/v1/jobs/master\`, {
   method: 'POST',
@@ -68,7 +68,7 @@ console.log('Elapsed:', response.headers.get('X-Elapsed-Ms'), 'ms');`,
   },
   {
     lang: 'Analysis Only (JSON response)',
-    code: `curl -X POST https://api.whiteprint.audio/api/v1/jobs/master \\
+    code: `curl -X POST https://concertmaster.aimastering.tech/api/v1/jobs/master \\
   -H "X-Api-Key: YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{

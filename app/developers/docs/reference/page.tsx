@@ -17,7 +17,7 @@ export default function ReferencePage() {
       <section className="mt-12">
         <h2 className="text-xl font-bold text-white mb-4">Base URL</h2>
         <code className="block p-4 rounded-lg bg-zinc-950 border border-zinc-800 text-sm font-mono text-emerald-400">
-          https://api.whiteprint.audio
+          https://concertmaster.aimastering.tech
         </code>
       </section>
 

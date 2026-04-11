@@ -39,7 +39,7 @@ export default function QuickstartPage() {
               cURL
             </div>
             <pre className="p-6 text-sm font-mono text-emerald-400 overflow-x-auto">
-{`curl -X POST https://api.whiteprint.audio/api/v1/jobs/master \\
+{`curl -X POST https://concertmaster.aimastering.tech/api/v1/jobs/master \\
   -H "X-Api-Key: YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
