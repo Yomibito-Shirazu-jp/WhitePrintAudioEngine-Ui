@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import InteractiveCurl from '@/components/developers/interactive-curl';
 
 export const metadata: Metadata = {
   title: 'Quickstart — API Documentation',
@@ -34,23 +35,7 @@ export default function QuickstartPage() {
 
         <div>
           <h2 className="text-xl font-bold text-white mb-4">3. Send Your First Request</h2>
-          <div className="rounded-xl border border-zinc-800 bg-zinc-950 overflow-hidden">
-            <div className="px-4 py-2 bg-zinc-900/50 border-b border-zinc-800 text-xs text-zinc-500 font-mono">
-              cURL
-            </div>
-            <pre className="p-6 text-sm font-mono text-emerald-400 overflow-x-auto">
-{`curl -X POST https://concertmaster.aimastering.tech/api/v1/jobs/master \\
-  -H "X-Api-Key: YOUR_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "audio_url": "https://your-storage.com/track.wav",
-    "route": "full",
-    "target_lufs": -14.0,
-    "target_true_peak": -1.0
-  }' \\
-  -o mastered.wav`}
-            </pre>
-          </div>
+          <InteractiveCurl />
         </div>
 
         <div>
