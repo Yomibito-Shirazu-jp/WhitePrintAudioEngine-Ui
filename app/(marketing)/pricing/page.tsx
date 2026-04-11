@@ -5,116 +5,116 @@ import JsonLd from '@/components/seo/json-ld';
 export const metadata: Metadata = {
   title: 'Pricing — AI Audio Mastering Plans',
   description:
-    'Free, Standard, Pro, and API plans for AI-powered audio mastering. Start free with BS.1770-4 analysis and multi-LLM deliberation.',
+    'Free, Standard, Pro, API, and White Label plans for AI-powered audio mastering. Start free with BS.1770-4 analysis and multi-LLM deliberation.',
   alternates: { canonical: '/pricing' },
 };
 
 const plans = [
   {
     name: 'Free',
-    monthlyPrice: '¥0',
+    monthlyPrice: '$0',
     annualPrice: null,
     period: '',
     annualNote: null,
-    description: 'AI マスタリングを体験。',
+    description: 'Experience the full AI mastering pipeline.',
     features: [
-      'WAV マスタリング 月3回',
-      'BS.1770-4 全解析 + 時系列データ',
-      'マルチ LLM 審議（3モデル）',
-      'セクション別マスタリング',
-      'A/B 比較プレーヤー',
-      'メトリクスダッシュボード',
+      '3 WAV masters per month',
+      'BS.1770-4 full analysis + time-series',
+      'Multi-LLM deliberation (3 models)',
+      'Section-based mastering',
+      'A/B comparison player',
+      'Metrics dashboard',
     ],
-    cta: '無料で始める',
+    cta: 'Start Free',
     href: '/signup',
     highlighted: false,
     badge: null,
   },
   {
     name: 'Standard',
-    monthlyPrice: '¥9,800',
-    annualPrice: '¥7,840',
-    period: '/月',
-    annualNote: '年払い ¥94,080（¥23,520 お得）',
-    description: 'レギュラーに制作するプロデューサー向け。',
+    monthlyPrice: '$67',
+    annualPrice: '$54',
+    period: '/mo',
+    annualNote: '$648/yr billed annually (save $156)',
+    description: 'For producers who master regularly.',
     features: [
-      'WAV マスタリング 月30回',
-      'BS.1770-4 全解析 + 時系列データ',
-      'マルチ LLM 審議（3モデル）',
-      'セクション別マスタリング',
-      'カスタム LUFS / True Peak ターゲット',
-      '解析履歴 90日保持',
-      'メールサポート',
+      '30 WAV masters per month',
+      'BS.1770-4 full analysis + time-series',
+      'Multi-LLM deliberation (3 models)',
+      'Section-based mastering',
+      'Custom LUFS / True Peak targets',
+      '90-day analysis history',
+      'Email support',
     ],
-    cta: '14日間無料トライアル',
+    cta: '14-day free trial',
     href: '/signup?plan=standard',
     highlighted: false,
     badge: null,
   },
   {
     name: 'Pro',
-    monthlyPrice: '¥198,000',
-    annualPrice: '¥158,400',
-    period: '/月',
-    annualNote: '年払い ¥1,900,800（¥475,200 お得）',
-    description: 'プロのエンジニア・レーベル向け。',
+    monthlyPrice: '$1,365',
+    annualPrice: '$1,092',
+    period: '/mo',
+    annualNote: '$13,104/yr billed annually (save $3,276)',
+    description: 'For professional engineers and labels.',
     features: [
-      'WAV マスタリング無制限',
-      'BS.1770-4 全解析 + 時系列データ',
-      'マルチ LLM 審議（3モデル + 審議ログ全文）',
-      'セクション別マスタリング',
-      'カスタム DSP パラメータ上書き',
-      'バッチ処理（最大10トラック）',
-      '優先キュー処理',
-      '解析履歴 無期限保持',
-      'プライオリティサポート',
+      'Unlimited WAV masters',
+      'BS.1770-4 full analysis + time-series',
+      'Multi-LLM deliberation (3 models + full logs)',
+      'Section-based mastering',
+      'Custom DSP parameter override',
+      'Batch processing (up to 10 tracks)',
+      'Priority queue',
+      'Unlimited analysis history',
+      'Priority support',
     ],
-    cta: '14日間無料トライアル',
+    cta: '14-day free trial',
     href: '/signup?plan=pro',
     highlighted: true,
-    badge: '人気',
+    badge: 'Popular',
   },
   {
     name: 'API',
-    monthlyPrice: '¥398,000',
-    annualPrice: '¥318,400',
-    period: '/月',
-    annualNote: '年払い ¥3,820,800（¥955,200 お得）',
-    description: 'プロダクトやワークフローに統合。',
+    monthlyPrice: '$2,745',
+    annualPrice: '$2,196',
+    period: '/mo',
+    annualNote: '$26,352/yr billed annually (save $6,588)',
+    description: 'Integrate mastering into your product.',
     features: [
-      'Pro の全機能',
-      'REST API アクセス',
-      'Webhook 通知',
-      '月 1,000 API コール',
-      'バッチ処理（無制限）',
-      'カスタム LLM モデル選択',
-      '専用サポート + SLA',
-      'SSO / チーム管理',
+      'Everything in Pro',
+      'REST API access',
+      'Webhook notifications',
+      '1,000 API calls/month',
+      'Unlimited batch processing',
+      'Custom LLM model selection',
+      'Dedicated support + SLA',
+      'SSO / team management',
     ],
-    cta: '営業に問い合わせ',
+    cta: 'Contact Sales',
     href: '/contact',
     highlighted: false,
     badge: 'B2B',
   },
   {
     name: 'White Label',
-    monthlyPrice: '¥998,000',
-    annualPrice: '¥798,400',
-    period: '/月',
-    annualNote: '年払い ¥9,580,800（¥2,395,200 お得）',
-    description: '自社ブランドでマスタリングサービスを提供。',
+    monthlyPrice: '$6,883',
+    annualPrice: '$5,506',
+    period: '/mo',
+    annualNote: '$66,072/yr billed annually (save $16,524)',
+    description: 'Run mastering under your own brand.',
     features: [
-      'API の全機能',
-      'ホワイトラベル（自社ブランド UI）',
-      'カスタムドメイン対応',
-      'API コール無制限',
-      '専用インフラ（独立環境）',
-      'カスタム DSP チェーン構成',
-      'カスタム LLM プロンプト',
-      'オンボーディングサポート',
-      '24/7 専用サポート + SLA 99.9%',
+      'Everything in API',
+      'White-label (custom brand UI)',
+      'Custom domain support',
+      'Unlimited API calls',
+      'Dedicated infrastructure',
+      'Custom DSP chain configuration',
+      'Custom LLM prompts',
+      'Onboarding support',
+      '24/7 dedicated support + 99.9% SLA',
     ],
-    cta: '営業に問い合わせ',
+    cta: 'Contact Sales',
     href: '/contact',
     highlighted: false,
     badge: 'Enterprise',
@@ -122,17 +122,17 @@ const plans = [
 ];
 
 const comparisonRows = [
-  { feature: 'WAV マスタリング', free: '月3回', standard: '月30回', pro: '無制限', api: '無制限', whitelabel: '無制限' },
-  { feature: 'BS.1770-4 解析', free: '全指標 + 時系列', standard: '全指標 + 時系列', pro: '全指標 + 時系列', api: '全指標 + 時系列', whitelabel: '全指標 + 時系列' },
-  { feature: 'LLM 審議モデル数', free: '3', standard: '3', pro: '3 + 全ログ', api: '3 + カスタム', whitelabel: 'カスタム' },
-  { feature: 'セクション別処理', free: 'あり', standard: 'あり', pro: 'あり', api: 'あり', whitelabel: 'あり' },
-  { feature: 'DSP パラメータ上書き', free: '-', standard: '-', pro: 'あり', api: 'あり', whitelabel: 'カスタムチェーン' },
-  { feature: 'バッチ処理', free: '-', standard: '-', pro: '最大10', api: '無制限', whitelabel: '無制限' },
-  { feature: 'API アクセス', free: '-', standard: '-', pro: '-', api: '月1,000コール', whitelabel: '無制限' },
-  { feature: 'ホワイトラベル', free: '-', standard: '-', pro: '-', api: '-', whitelabel: '自社ブランド' },
-  { feature: '専用インフラ', free: '-', standard: '-', pro: '-', api: '-', whitelabel: 'あり' },
-  { feature: '解析履歴', free: '7日', standard: '90日', pro: '無期限', api: '無期限', whitelabel: '無期限' },
-  { feature: 'サポート', free: 'コミュニティ', standard: 'メール', pro: 'プライオリティ', api: '専用 + SLA', whitelabel: '24/7 + SLA 99.9%' },
+  { feature: 'WAV mastering', free: '3/mo', standard: '30/mo', pro: 'Unlimited', api: 'Unlimited', whitelabel: 'Unlimited' },
+  { feature: 'BS.1770-4 analysis', free: 'Full + time-series', standard: 'Full + time-series', pro: 'Full + time-series', api: 'Full + time-series', whitelabel: 'Full + time-series' },
+  { feature: 'LLM deliberation', free: '3 models', standard: '3 models', pro: '3 + full logs', api: '3 + custom', whitelabel: 'Custom' },
+  { feature: 'Section-based processing', free: 'Yes', standard: 'Yes', pro: 'Yes', api: 'Yes', whitelabel: 'Yes' },
+  { feature: 'DSP parameter override', free: '-', standard: '-', pro: 'Yes', api: 'Yes', whitelabel: 'Custom chain' },
+  { feature: 'Batch processing', free: '-', standard: '-', pro: 'Up to 10', api: 'Unlimited', whitelabel: 'Unlimited' },
+  { feature: 'API access', free: '-', standard: '-', pro: '-', api: '1,000 calls/mo', whitelabel: 'Unlimited' },
+  { feature: 'White label', free: '-', standard: '-', pro: '-', api: '-', whitelabel: 'Your brand' },
+  { feature: 'Dedicated infra', free: '-', standard: '-', pro: '-', api: '-', whitelabel: 'Yes' },
+  { feature: 'Analysis history', free: '7 days', standard: '90 days', pro: 'Unlimited', api: 'Unlimited', whitelabel: 'Unlimited' },
+  { feature: 'Support', free: 'Community', standard: 'Email', pro: 'Priority', api: 'Dedicated + SLA', whitelabel: '24/7 + 99.9% SLA' },
 ];
 
 export default function PricingPage() {
@@ -148,9 +148,9 @@ export default function PricingPage() {
             '@type': 'Offer',
             name: plan.name,
             price: plan.annualPrice
-              ? plan.annualPrice.replace('¥', '').replace(',', '')
+              ? plan.annualPrice.replace('$', '').replace(',', '')
               : '0',
-            priceCurrency: 'JPY',
+            priceCurrency: 'USD',
             description: plan.description,
           })),
         }}
@@ -160,10 +160,10 @@ export default function PricingPage() {
         {/* Header */}
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold text-white">
-            シンプルで透明な料金体系
+            Simple, transparent pricing
           </h1>
           <p className="mt-4 text-lg text-zinc-400">
-            無料で始めて、必要に応じてアップグレード。全プラン14日間無料トライアル付き。
+            Start free. Upgrade when you need more. 14-day free trial on all paid plans.
           </p>
         </div>
 
@@ -198,7 +198,7 @@ export default function PricingPage() {
                       <span className="text-sm text-zinc-500">{plan.period}</span>
                     </div>
                     <div className="mt-1 text-xs text-zinc-500 line-through">
-                      {plan.monthlyPrice}/月
+                      {plan.monthlyPrice}/mo
                     </div>
                     <div className="mt-1 text-xs text-indigo-400">{plan.annualNote}</div>
                   </>
@@ -239,35 +239,35 @@ export default function PricingPage() {
           ))}
         </div>
 
-        {/* LANDR Comparison */}
+        {/* Differentiator */}
         <div className="mt-24 max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-2xl font-bold text-white">WhitePrint vs 他サービス</h2>
+            <h2 className="text-2xl font-bold text-white">WhitePrint vs the competition</h2>
             <p className="mt-3 text-zinc-400 text-sm">
-              同等価格帯で、WhitePrint だけが提供する機能
+              Features only WhitePrint provides at any price
             </p>
           </div>
           <div className="grid md:grid-cols-2 gap-6">
             {[
               {
-                title: '審議プロセスの完全公開',
-                desc: '3つの AI モデルがそれぞれ推奨するパラメータと根拠を全て閲覧可能。ブラックボックスではありません。',
-                others: '他社: 結果のみ、理由は非公開',
+                title: 'Full deliberation transparency',
+                desc: 'See what each of 3 AI models recommended and why. Every parameter, every rationale — not a black box.',
+                others: 'Others: result only, no reasoning',
               },
               {
-                title: 'BS.1770-4 準拠の測定',
-                desc: 'ITU 放送規格に完全準拠した LUFS/True Peak/LRA 測定。ストリーミングプラットフォームと同じ基準。',
-                others: '他社: 規格準拠の明示なし',
+                title: 'BS.1770-4 certified measurement',
+                desc: 'ITU broadcast-standard LUFS, true peak, and LRA. The same standard streaming platforms use.',
+                others: 'Others: no standards compliance stated',
               },
               {
                 title: 'REST API',
-                desc: 'Web UI で出来ることは全て API 経由で自動化可能。DAW プラグイン、配信パイプラインに統合。',
-                others: '他社: API 非公開',
+                desc: 'Everything in the web UI is available via API. Integrate into DAW plugins, distribution pipelines, CI/CD.',
+                others: 'Others: no public API',
               },
               {
-                title: 'URL 入力でファイルアップロード不要',
-                desc: 'Google Drive, Dropbox, OneDrive, S3, GCS の URL を貼るだけ。クラウドから直接処理。',
-                others: '他社: ファイルアップロード必須',
+                title: 'Cloud URL input — no upload needed',
+                desc: 'Paste a Google Drive, Dropbox, OneDrive, S3, or GCS link. We fetch and process directly.',
+                others: 'Others: file upload required',
               },
             ].map((item) => (
               <div
@@ -283,13 +283,13 @@ export default function PricingPage() {
         </div>
 
         {/* Comparison Table */}
-        <div className="mt-24 max-w-5xl mx-auto">
-          <h2 className="text-2xl font-bold text-white text-center mb-8">プラン比較表</h2>
+        <div className="mt-24 max-w-6xl mx-auto">
+          <h2 className="text-2xl font-bold text-white text-center mb-8">Plan comparison</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-zinc-800">
-                  <th className="text-left py-3 px-4 text-zinc-400 font-medium">機能</th>
+                  <th className="text-left py-3 px-4 text-zinc-400 font-medium">Feature</th>
                   <th className="text-center py-3 px-3 text-zinc-400 font-medium">Free</th>
                   <th className="text-center py-3 px-3 text-zinc-400 font-medium">Standard</th>
                   <th className="text-center py-3 px-3 text-zinc-400 font-medium">
@@ -317,24 +317,24 @@ export default function PricingPage() {
 
         {/* FAQ */}
         <div className="mt-24 max-w-3xl mx-auto">
-          <h2 className="text-2xl font-bold text-white text-center mb-8">よくある質問</h2>
+          <h2 className="text-2xl font-bold text-white text-center mb-8">Frequently asked questions</h2>
           <div className="space-y-6">
             {[
               {
-                q: '無料トライアル中にクレジットカードは必要ですか？',
-                a: 'いいえ。Free プランはカード登録不要です。有料プランの14日間トライアルもカード不要で始められます。',
+                q: 'Do I need a credit card for the free trial?',
+                a: 'No. The Free plan requires no card. Paid plan 14-day trials are also card-free.',
               },
               {
-                q: 'いつでもプラン変更やキャンセルはできますか？',
-                a: 'はい。アップグレード・ダウングレードはいつでも可能です。年払いの場合、残り期間は日割りで精算されます。',
+                q: 'Can I change plans or cancel anytime?',
+                a: 'Yes. Upgrade or downgrade anytime. Annual plans are prorated for the remaining period.',
               },
               {
-                q: 'LANDR や eMastered との違いは何ですか？',
-                a: 'WhitePrint は審議プロセスを完全公開します。3つの AI モデルがそれぞれ推奨するパラメータと根拠を閲覧でき、BS.1770-4 準拠の測定結果も提供します。また、REST API を公開しており、自動化や統合が可能です。',
+                q: 'How is WhitePrint different from LANDR or eMastered?',
+                a: 'WhitePrint is fully transparent. You see what 3 AI models each recommended and why. We provide BS.1770-4 certified measurements and a public REST API — features no competitor offers.',
               },
               {
-                q: 'API プランの月1,000コールを超えた場合は？',
-                a: '超過分は 1コールあたり ¥10 で従量課金されます。大量利用の場合はカスタムプランをご相談ください。',
+                q: 'What happens if I exceed 1,000 API calls on the API plan?',
+                a: 'Overage is billed at $0.07 per call. For high-volume usage, contact us for a custom plan.',
               },
             ].map((item) => (
               <div key={item.q} className="p-6 rounded-xl border border-zinc-800 bg-zinc-950">
@@ -347,11 +347,11 @@ export default function PricingPage() {
 
         {/* Bottom CTA */}
         <div className="mt-16 text-center text-sm text-zinc-500">
-          全プランに BS.1770-4 解析とマルチ LLM 審議が含まれます。
+          All plans include BS.1770-4 analysis and multi-LLM deliberation.
           <br />
-          カスタムプランが必要ですか？{' '}
+          Need a custom plan?{' '}
           <Link href="/contact" className="text-indigo-400 hover:text-indigo-300">
-            お問い合わせ
+            Contact us
           </Link>
         </div>
       </div>

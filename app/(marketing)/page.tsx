@@ -82,10 +82,10 @@ export default function LandingPage() {
             </p>
             <div className="flex items-center justify-center gap-4 flex-wrap">
               <Link
-                href="/signup"
+                href="/app"
                 className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg transition-colors text-base"
               >
-                Try Free — 3 masters/month
+                Master Now — Free, no signup
               </Link>
               <Link
                 href="/features/deliberation"
@@ -253,14 +253,14 @@ export default function LandingPage() {
             Try it on your own track.
           </h2>
           <p className="text-zinc-400">
-            Free. 3 masters per month. No credit card. Just listen.
+            Free. No signup. No credit card. Just listen.
           </p>
           <div className="flex items-center justify-center gap-4 flex-wrap">
             <Link
-              href="/signup"
+              href="/app"
               className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg transition-colors"
             >
-              Start Free
+              Master Now
             </Link>
             <Link
               href="/pricing"
