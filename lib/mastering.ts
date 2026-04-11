@@ -35,8 +35,8 @@ export async function runMastering(
       const parsed = JSON.parse(metricsHeader);
       metrics = { ...metrics, ...parsed };
     }
-  } catch {
-    // X-Metrics header missing or unparseable — use defaults
+  } catch (error) {
+    console.warn('Failed to parse X-Metrics header, using defaults:', error);
   }
 
   return {
