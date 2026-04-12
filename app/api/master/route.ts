@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-const CONCERTMASTER_URL = process.env.CONCERTMASTER_URL || 'https://whiteprintaudioengine-concertmaster-git-270124753853.asia-northeast1.run.app';
+const CONCERTMASTER_URL = (process.env.CONCERTMASTER_URL || 'https://whiteprintaudioengine-concertmaster-git-270124753853.asia-northeast1.run.app').replace(/\/+$/, '');
 const CONCERTMASTER_API_KEY = process.env.CONCERTMASTER_API_KEY || '';
 
 // Free plan limits (no billing record = free)
@@ -66,9 +66,12 @@ export async function POST(request: NextRequest) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 600_000);
 
+    const targetUrl = `${CONCERTMASTER_URL}/api/v1/jobs/master`;
+    console.log(`[master] Fetching: ${targetUrl} | Key prefix: ${CONCERTMASTER_API_KEY?.substring(0, 12)}...`);
+
     let response: Response;
     try {
-      response = await fetch(`${CONCERTMASTER_URL}/api/v1/jobs/master`, {
+      response = await fetch(targetUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -77,8 +80,11 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify(body),
         signal: controller.signal,
       });
+      console.log(`[master] Backend responded: ${response.status} ${response.statusText} | Content-Type: ${response.headers.get('content-type')}`);
     } catch (err) {
       clearTimeout(timeout);
+      const errMsg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+      console.error(`[master] Fetch threw: ${errMsg} | URL: ${targetUrl}`);
       if (err instanceof DOMException && err.name === 'AbortError') {
         return NextResponse.json(
           { error: 'Backend request timed out after 10 minutes.' },
