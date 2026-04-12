@@ -3,6 +3,7 @@
 import type { DeliberationOutput } from '@/types/deliberation';
 import { motion } from 'framer-motion';
 import { BrainCircuit, CheckCircle2, Code, LayoutDashboard, MessageSquare, Sliders, Target, AlertTriangle, Activity, Layers, Zap } from 'lucide-react';
+import TriadConsensus from '@/components/triad-consensus';
 import { useState } from 'react';
 
 interface DeliberationDashboardProps {
@@ -60,27 +61,8 @@ export default function DeliberationDashboard({ data, onRunMastering }: Delibera
       ) : (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
           
-          {/* Top Row: Summary & Scores */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-5 flex flex-col lg:col-span-2">
-              <h3 className="text-xs font-mono text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                <Target className="w-4 h-4" /> Deliberation_Summary
-              </h3>
-              <p className="text-sm text-zinc-300 leading-relaxed">
-                {(data as any).trivium_summary || `Deliberation completed. Target LUFS: ${data.target_lufs}, True Peak: ${data.target_true_peak} dBTP.`}
-              </p>
-            </div>
-            <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-5 flex flex-col">
-              <h3 className="text-xs font-mono text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                <Activity className="w-4 h-4" /> Deliberation_Scores
-              </h3>
-              <div className="space-y-3 mt-auto">
-                <ScoreBar label="Overall Score" value={data.deliberation_score} />
-                <ScoreBar label="Dynamics" value={data.deliberation_score_detail.dynamics} />
-                <ScoreBar label="Tone" value={data.deliberation_score_detail.tone} />
-              </div>
-            </div>
-          </div>
+          {/* Triad Consensus — replaces old Summary & Scores */}
+          <TriadConsensus data={data} />
 
           {/* Adopted Parameters */}
           <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-5">
