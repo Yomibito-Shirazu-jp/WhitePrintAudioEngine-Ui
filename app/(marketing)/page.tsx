@@ -82,6 +82,11 @@ export default function LandingPage() {
               Black-box mastering is over.
             </p>
             <HeroUrlInput />
+            <p className="text-xs text-zinc-600 max-w-md mx-auto">
+              Upload your audio to Google Drive, set sharing to &quot;Anyone with the link&quot;, and paste the URL.
+              <br />
+              We do not store your audio. Files are processed in memory and immediately discarded.
+            </p>
             <div className="flex items-center justify-center gap-4 mt-2">
               <Link
                 href="/features/deliberation"
