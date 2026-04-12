@@ -11,9 +11,10 @@ interface ResultsDashboardProps {
   data: AnalysisResult;
   onRunDeliberation?: (targetLufs: number, targetTruePeak: number) => void;
   audioUrl?: string | null;
+  onReset?: () => void;
 }
 
-export default function ResultsDashboard({ data, onRunDeliberation, audioUrl }: ResultsDashboardProps) {
+export default function ResultsDashboard({ data, onRunDeliberation, audioUrl, onReset }: ResultsDashboardProps) {
   const [viewMode, setViewMode] = useState<'visual' | 'json'>('visual');
   const [targetLufs, setTargetLufs] = useState(-14.0);
   const [targetTruePeak, setTargetTruePeak] = useState(-1.0);
@@ -75,7 +76,14 @@ export default function ResultsDashboard({ data, onRunDeliberation, audioUrl }: 
     <div className="max-w-7xl mx-auto p-6 space-y-6 pb-24">
       {/* View Toggle */}
       <div className="flex justify-between items-center mb-2">
-        <h2 className="text-xl font-mono font-bold text-white">ANALYSIS_COMPLETE</h2>
+        <div className="flex items-center gap-4">
+          <h2 className="text-xl font-mono font-bold text-white">ANALYSIS_COMPLETE</h2>
+          {onReset && (
+            <button onClick={onReset} className="text-[10px] font-mono text-zinc-500 hover:text-zinc-300 transition-colors uppercase border border-zinc-800 rounded px-2 py-1 bg-zinc-900/50">
+              [ New_Session ]
+            </button>
+          )}
+        </div>
         <div className="flex items-center gap-4">
           {onRunDeliberation && (
             <button
