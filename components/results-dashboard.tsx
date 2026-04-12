@@ -18,6 +18,7 @@ export default function ResultsDashboard({ data, onRunDeliberation, audioUrl }: 
   const [targetLufs, setTargetLufs] = useState(-14.0);
   const [targetTruePeak, setTargetTruePeak] = useState(-1.0);
   const [showPlatformModal, setShowPlatformModal] = useState(false);
+  const [selectedSection, setSelectedSection] = useState<number | null>(null);
   const [playbackTime, setPlaybackTime] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -229,13 +230,21 @@ export default function ResultsDashboard({ data, onRunDeliberation, audioUrl }: 
                   
                   {/* Render Physical Sections as background areas */}
                   {physical_sections.map((section, idx) => (
-                    <ReferenceArea 
+                    <ReferenceArea
                       key={idx}
                       yAxisId="left"
-                      x1={section.start_sec} 
-                      x2={section.end_sec} 
-                      fill={idx % 2 === 0 ? '#18181b' : 'transparent'} 
-                      fillOpacity={0.5}
+                      x1={section.start_sec}
+                      x2={section.end_sec}
+                      fill={selectedSection === idx ? '#4f46e5' : idx % 2 === 0 ? '#18181b' : 'transparent'}
+                      fillOpacity={selectedSection === idx ? 0.3 : 0.5}
+                      onClick={() => {
+                        setSelectedSection(selectedSection === idx ? null : idx);
+                        if (audioRef.current) {
+                          audioRef.current.currentTime = section.start_sec;
+                          if (!isPlaying) { audioRef.current.play(); setIsPlaying(true); }
+                        }
+                      }}
+                      style={{ cursor: 'pointer' }}
                     />
                   ))}
 
@@ -257,7 +266,14 @@ export default function ResultsDashboard({ data, onRunDeliberation, audioUrl }: 
                   <div 
                     key={idx} 
                     style={{ width: `${width}%` }}
-                    className="h-full border-r border-zinc-800 last:border-r-0 bg-zinc-900/50 hover:bg-zinc-800 transition-colors flex items-center justify-center group relative cursor-crosshair"
+                    onClick={() => {
+                      setSelectedSection(selectedSection === idx ? null : idx);
+                      if (audioRef.current) {
+                        audioRef.current.currentTime = section.start_sec;
+                        if (!isPlaying) { audioRef.current.play(); setIsPlaying(true); }
+                      }
+                    }}
+                    className={`h-full border-r border-zinc-800 last:border-r-0 transition-colors flex items-center justify-center group relative cursor-pointer ${selectedSection === idx ? 'bg-indigo-500/20 ring-1 ring-indigo-500/40' : 'bg-zinc-900/50 hover:bg-zinc-800'}`}
                   >
                     <span className="text-[10px] font-mono text-zinc-500 group-hover:text-zinc-300 truncate px-1">
                       {`SEC_${idx}`}
@@ -345,7 +361,17 @@ export default function ResultsDashboard({ data, onRunDeliberation, audioUrl }: 
                   const fmtTime = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
 
                   return (
-                    <div key={idx} className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-lg">
+                    <div
+                      key={idx}
+                      onClick={() => {
+                        setSelectedSection(selectedSection === idx ? null : idx);
+                        if (audioRef.current) {
+                          audioRef.current.currentTime = sec.start_sec;
+                          if (!isPlaying) { audioRef.current.play(); setIsPlaying(true); }
+                        }
+                      }}
+                      className={`p-4 rounded-lg cursor-pointer transition-colors ${selectedSection === idx ? 'bg-indigo-500/10 border-indigo-500/40 border' : 'bg-zinc-900/50 border border-zinc-800 hover:bg-zinc-800/50'}`}
+                    >
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
                           <span className="text-sm font-mono font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
