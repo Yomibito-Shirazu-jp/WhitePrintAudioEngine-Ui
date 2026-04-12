@@ -53,16 +53,21 @@ export default function ResultsDashboard({ data, onRunDeliberation, audioUrl }: 
     setTargetLufs(lufs);
     setTargetTruePeak(truePeak);
   }, []);
-  const { track_identity, whole_track_metrics, time_series_circuit_envelopes, physical_sections, detected_problems } = data;
+  const track_identity = data?.track_identity ?? { duration_sec: 0, sample_rate: 0, bpm: null, key: null, bit_depth: 0 };
+  const whole_track_metrics = data?.whole_track_metrics ?? {} as any;
+  const time_series_circuit_envelopes = data?.time_series_circuit_envelopes ?? { resolution_sec: 1, lufs: [], crest_db: [], width: [], sub_ratio: [], bass_ratio: [], vocal_presence: [], spectral_brightness: [], low_mono_correlation: [], transient_sharpness: [] };
+  const physical_sections = data?.physical_sections ?? [];
+  const detected_problems = data?.detected_problems ?? [];
 
   // Prepare chart data
   const chartData = useMemo(() => {
-    return time_series_circuit_envelopes.lufs.map((lufs, i) => ({
-      time: i * time_series_circuit_envelopes.resolution_sec,
+    if (!time_series_circuit_envelopes?.lufs?.length) return [];
+    return time_series_circuit_envelopes.lufs.map((lufs: number, i: number) => ({
+      time: i * (time_series_circuit_envelopes.resolution_sec || 1),
       lufs,
-      crest: time_series_circuit_envelopes.crest_db[i],
-      width: time_series_circuit_envelopes.width[i],
-      subRatio: time_series_circuit_envelopes.sub_ratio[i],
+      crest: time_series_circuit_envelopes.crest_db?.[i] ?? 0,
+      width: time_series_circuit_envelopes.width?.[i] ?? 0,
+      subRatio: time_series_circuit_envelopes.sub_ratio?.[i] ?? 0,
     }));
   }, [time_series_circuit_envelopes]);
 
@@ -197,8 +202,8 @@ export default function ResultsDashboard({ data, onRunDeliberation, audioUrl }: 
               </div>
             </div>
             
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="w-full min-h-[300px] h-[300px]">
+              <ResponsiveContainer width="100%" height="100%" minHeight={300}>
                 <LineChart data={chartData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                   <XAxis 

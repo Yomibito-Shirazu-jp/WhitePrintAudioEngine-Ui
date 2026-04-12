@@ -8,8 +8,9 @@ interface TriadConsensusProps {
 }
 
 export default function TriadConsensus({ data }: TriadConsensusProps) {
+  if (!data) return null;
   const summary = (data as any).trivium_summary || 'Deliberation completed.';
-  const score = data.deliberation_score_detail || { global: 0.5, dynamics: 0.5, tone: 0.5, stereo: 0.5, saturation: 0.5 };
+  const score = data.deliberation_score_detail ?? { global: 0.5, dynamics: 0.5, tone: 0.5, stereo: 0.5, saturation: 0.5 };
 
   const categories = [
     { name: 'Dynamics', score: score.dynamics },

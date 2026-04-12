@@ -87,7 +87,7 @@ export default function DeliberationDashboard({ data, onRunMastering }: Delibera
               <MessageSquare className="w-4 h-4" /> Sage_Opinions
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {data.opinions.map((opinion, index) => {
+              {(data.opinions ?? []).map((opinion, index) => {
                 const colors = [
                   { border: 'border-blue-500/40', accent: 'text-blue-400', bg: 'bg-blue-600', ring: 'ring-1 ring-blue-500/20', headerBg: 'bg-blue-950/50' },
                   { border: 'border-emerald-500/40', accent: 'text-emerald-400', bg: 'bg-emerald-600', ring: 'ring-1 ring-emerald-500/20', headerBg: 'bg-emerald-950/50' },
@@ -110,8 +110,8 @@ export default function DeliberationDashboard({ data, onRunMastering }: Delibera
               {(data.dynamic_mastering_sections ?? []).map((section, index) => {
                 const m = section.source_metrics;
                 const fmtTime = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
-                const hasOverrides = Object.keys(section.override_sources).length > 0;
-                const hasDiff = Object.keys(section.diff_from_global).length > 0;
+                const hasOverrides = Object.keys(section.override_sources ?? {}).length > 0;
+                const hasDiff = Object.keys(section.diff_from_global ?? {}).length > 0;
                 const hasCoupling = (section.dsp_coupling_applied ?? []).length > 0;
 
                 return (
@@ -160,7 +160,7 @@ export default function DeliberationDashboard({ data, onRunMastering }: Delibera
                     {/* AI Override Rationales */}
                     {hasOverrides && (
                       <div className="space-y-2">
-                        {Object.entries(section.override_sources).map(([agent, info]) => (
+                        {Object.entries(section.override_sources ?? {}).map(([agent, info]) => (
                           <div key={agent} className="text-xs text-zinc-400 bg-zinc-900 p-3 rounded-lg border border-zinc-800/50">
                             <span className="font-bold text-zinc-300 uppercase">{agent}:</span> {info.rationale}
                           </div>
@@ -171,13 +171,13 @@ export default function DeliberationDashboard({ data, onRunMastering }: Delibera
                     {/* Parameter Diff from Global */}
                     {hasDiff && (
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        {Object.entries(section.diff_from_global).map(([param, diff]) => (
+                        {Object.entries(section.diff_from_global ?? {}).map(([param, diff]) => (
                           <div key={param} className="bg-zinc-900 p-2 rounded-lg border border-zinc-800/50">
                             <div className="text-[9px] font-mono text-zinc-500 uppercase truncate">{param}</div>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-mono text-zinc-100">{typeof diff.section_value === 'number' ? diff.section_value.toFixed(2) : diff.section_value}</span>
                               <span className={`text-xs font-mono ${diff.delta > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                {diff.delta > 0 ? '+' : ''}{diff.delta.toFixed(2)}
+                                {(diff?.delta ?? 0) > 0 ? '+' : ''}{(diff?.delta ?? 0).toFixed(2)}
                               </span>
                             </div>
                           </div>
