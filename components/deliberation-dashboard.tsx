@@ -67,8 +67,7 @@ export default function DeliberationDashboard({ data, onRunMastering }: Delibera
                 <Target className="w-4 h-4" /> Deliberation_Summary
               </h3>
               <p className="text-sm text-zinc-300 leading-relaxed">
-                Deliberation completed successfully using {data.merge_strategy} strategy.
-                Target LUFS set to {data.target_lufs} and True Peak to {data.target_true_peak} dBTP.
+                {(data as any).trivium_summary || `Deliberation completed. Target LUFS: ${data.target_lufs}, True Peak: ${data.target_true_peak} dBTP.`}
               </p>
             </div>
             <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-5 flex flex-col">
