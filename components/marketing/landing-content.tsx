@@ -97,12 +97,38 @@ export default function LandingContent({ onSubmit, error }: { onSubmit: (url: st
                 <br />
                 We do not store your audio. Files are processed in memory and immediately discarded.
               </p>
-              <div className="flex items-center justify-center gap-4 mt-2">
+
+              {/* Terminal / API hint */}
+              <div className="max-w-xl mx-auto mt-6 rounded-lg border border-zinc-800/60 bg-zinc-950/80 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-800/40 bg-zinc-900/30">
+                  <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Terminal</span>
+                  <Link href="/developers/docs/quickstart" className="text-[10px] font-mono text-indigo-400 hover:text-indigo-300 transition-colors">
+                    Full API Docs →
+                  </Link>
+                </div>
+                <pre className="px-4 py-3 text-[11px] font-mono text-emerald-400/80 overflow-x-auto whitespace-pre leading-relaxed">
+{`curl -X POST https://concertmaster.aimastering.tech/api/v1/jobs/master \\
+  -H "X-Api-Key: YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"audio_url":"https://drive.google.com/...","route":"full"}' \\
+  -o mastered.wav`}
+                </pre>
+              </div>
+
+              <div className="flex items-center justify-center gap-6 mt-4">
                 <Link
                   href="/features/deliberation"
                   className="text-sm text-zinc-500 hover:text-indigo-400 transition-colors group"
                 >
-                  Or see AI deliberation in action
+                  See AI deliberation in action
+                  <span className="inline-block ml-1 group-hover:translate-x-1 transition-transform">&rarr;</span>
+                </Link>
+                <span className="text-zinc-800">|</span>
+                <Link
+                  href="/developers"
+                  className="text-sm text-zinc-500 hover:text-indigo-400 transition-colors group"
+                >
+                  REST API &amp; SDK
                   <span className="inline-block ml-1 group-hover:translate-x-1 transition-transform">&rarr;</span>
                 </Link>
               </div>

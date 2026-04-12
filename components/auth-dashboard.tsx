@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { PlayCircle, Clock, Zap, ExternalLink, CheckCircle2, AlertCircle, Activity, FileAudio, Music } from 'lucide-react';
+import { PlayCircle, Clock, Zap, ExternalLink, CheckCircle2, AlertCircle, Activity, FileAudio, Music, Terminal, Code } from 'lucide-react';
 import HeroUrlInput from '@/components/marketing/hero-url-input';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
@@ -33,6 +33,7 @@ type AuthDashboardContentProps = {
 export default function AuthDashboardContent({ user, onSubmit, error }: AuthDashboardContentProps) {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'gui' | 'cli'>('gui');
 
   useEffect(() => {
     async function loadHistory() {
@@ -101,6 +102,22 @@ export default function AuthDashboardContent({ user, onSubmit, error }: AuthDash
                 <span>{error}</span>
               </div>
             )}
+            {/* Terminal hint */}
+            <details className="mt-4 group/details">
+              <summary className="text-[11px] font-mono text-zinc-500 hover:text-zinc-300 cursor-pointer transition-colors select-none">
+                Prefer your terminal? →
+              </summary>
+              <pre className="mt-2 px-4 py-3 rounded-lg bg-zinc-900/60 border border-zinc-800/40 text-[11px] font-mono text-emerald-400/80 overflow-x-auto whitespace-pre leading-relaxed">
+{`curl -X POST https://concertmaster.aimastering.tech/api/v1/jobs/master \\
+  -H "X-Api-Key: YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"audio_url":"https://...","route":"full"}' \\
+  -o mastered.wav`}
+              </pre>
+              <Link href="/developers/docs/quickstart" className="inline-block mt-2 text-[11px] font-mono text-indigo-400 hover:text-indigo-300">
+                Full API Reference →
+              </Link>
+            </details>
           </div>
         </div>
 
