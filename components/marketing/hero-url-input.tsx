@@ -3,18 +3,19 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-export default function HeroUrlInput() {
+export default function HeroUrlInput({ onSubmit }: { onSubmit?: (url: string) => void }) {
   const [url, setUrl] = useState('');
   const router = useRouter();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!url.trim()) {
-      router.push('/app');
-      return;
+    if (!url.trim()) return;
+    
+    if (onSubmit) {
+      onSubmit(url.trim());
+    } else {
+      router.push(`/?url=${encodeURIComponent(url.trim())}`);
     }
-    // Encode the URL and pass it to /app as a query param
-    router.push(`/app?url=${encodeURIComponent(url.trim())}`);
   };
 
   return (

@@ -95,7 +95,9 @@ export default function DeliberatingScreen() {
           <AnimatePresence mode="popLayout">
             {visibleMessages.slice(-5).map((msgIdx) => {
               const msg = MESSAGES[msgIdx];
+              if (!msg) return null;
               const sage = SAGES[msg.sage];
+              if (!sage) return null;
               return (
                 <motion.div
                   key={`${msgIdx}-${Math.floor(visibleMessages.length / MESSAGES.length)}`}

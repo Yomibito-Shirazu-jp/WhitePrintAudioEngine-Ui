@@ -1,277 +1,277 @@
-import Link from 'next/link';
-import type { Metadata } from 'next';
-import { WebApplicationJsonLd, OrganizationJsonLd } from '@/components/seo/json-ld';
-import HeroUrlInput from '@/components/marketing/hero-url-input';
+'use client';
 
-export const metadata: Metadata = {
-  alternates: { canonical: '/' },
-};
+import { Suspense, useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { AnimatePresence, motion } from 'framer-motion';
+import LandingContent from '@/components/marketing/landing-content';
+import AnalyzingScreen from '@/components/analyzing-screen';
+import ResultsDashboard from '@/components/results-dashboard';
+import DeliberatingScreen from '@/components/deliberating-screen';
+import DeliberationDashboard from '@/components/deliberation-dashboard';
+import MasteringScreen from '@/components/mastering-screen';
+import MasteringDashboard from '@/components/mastering-dashboard';
+import SiteHeader from '@/components/site-header';
+import { analyzeAudio } from '@/lib/audio-analysis';
+import { runDeliberation } from '@/lib/deliberation';
+import { runMastering } from '@/lib/mastering';
+import { createClient } from '@/lib/supabase/client';
+import type { AnalysisResult } from '@/types/audio';
+import type { DeliberationOutput } from '@/types/deliberation';
+import type { MasteringResult } from '@/types/mastering';
 
-const features = [
-  {
-    title: 'AI Reads Your Sound',
-    subtitle: 'BS.1770-4 Physical Analysis',
-    description:
-      'Loudness, true peak, dynamics, spectral balance, stereo width. Broadcast-standard measurement exposes the truth of your audio in hard numbers.',
-    href: '/features/analysis',
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-      </svg>
-    ),
-  },
-  {
-    title: '3 AIs Deliberate. Then Decide.',
-    subtitle: 'Multi-LLM Ensemble Engine',
-    description:
-      'OpenAI, Anthropic, Google. Three independent AIs analyze your track, debate the parameters, and reach consensus. Every recommendation, every rationale — visible.',
-    href: '/features/deliberation',
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
-      </svg>
-    ),
-  },
-  {
-    title: 'Mastering That Moves With the Music',
-    subtitle: 'AI Dynamic DSP Chain',
-    description:
-      'Intro, verse, chorus, outro — different EQ, compression, and limiting for each section. Not static one-size-fits-all. Dynamic mastering that follows your song.',
-    href: '/features/mastering',
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
-      </svg>
-    ),
-  },
-];
+function AppDashboardInner() {
+  const searchParams = useSearchParams();
+  const [appState, setAppState] = useState<'idle' | 'analyzing' | 'results' | 'deliberating' | 'deliberation_results' | 'mastering' | 'mastering_results'>('idle');
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [deliberationResult, setDeliberationResult] = useState<DeliberationOutput | null>(null);
+  const [masteringResult, setMasteringResult] = useState<MasteringResult | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const autoStarted = useRef(false);
 
-const stats = [
-  { value: 'BS.1770-4', label: 'Broadcast Standard' },
-  { value: '3 AIs', label: 'Deliberate Together' },
-  { value: '25+', label: 'DSP Parameters' },
-  { value: 'REST API', label: 'Full Automation' },
-];
+  const createJob = async (url: string): Promise<string | null> => {
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const fileName = url.split('/').pop()?.split('?')[0] || 'untitled';
+      const { data } = await supabase.from('jobs').insert({
+        user_id: user.id,
+        input_gcs_path: url,
+        input_file_name: fileName,
+        status: 'analyzing',
+        route: 'full',
+      }).select('id').single();
+      return data?.id || null;
+    } catch { return null; }
+  };
 
-export default function LandingPage() {
+  const updateJob = async (id: string | null, updates: Record<string, unknown>) => {
+    if (!id) return;
+    try {
+      const supabase = createClient();
+      await supabase.from('jobs').update(updates).eq('id', id);
+    } catch { /* non-blocking */ }
+  };
+
+  const parseAudioUrl = (inputUrl: string) => {
+    if (inputUrl.includes('drive.google.com') && inputUrl.includes('/view')) {
+      const match = inputUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+      }
+    }
+    return inputUrl;
+  };
+
+  const handleSubmit = async (url: string) => {
+    const parsedUrl = parseAudioUrl(url);
+    setAppState('analyzing');
+    setError(null);
+    setAudioUrl(parsedUrl);
+    const jid = await createJob(parsedUrl);
+    setJobId(jid);
+    try {
+      const result = await analyzeAudio(parsedUrl);
+      setAnalysisResult(result);
+      setAppState('results');
+      await updateJob(jid, {
+        status: 'completed',
+        analysis_data: result,
+        lufs_before: result.whole_track_metrics.integrated_lufs,
+        true_peak_before: result.whole_track_metrics.true_peak_dbtp,
+        bpm: result.track_identity.bpm,
+        musical_key: result.track_identity.key,
+        duration_sec: result.track_identity.duration_sec,
+        sample_rate: result.track_identity.sample_rate,
+        bit_depth: result.track_identity.bit_depth,
+      });
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : 'Unknown error occurred during analysis.');
+      setAppState('idle');
+      await updateJob(jid, { status: 'failed', error_message: err instanceof Error ? err.message : 'Unknown error' });
+    }
+  };
+
+  // Auto-start analysis if URL is passed via query param (from LP hero)
+  useEffect(() => {
+    const urlParam = searchParams.get('url');
+    if (urlParam && !autoStarted.current && appState === 'idle') {
+      autoStarted.current = true;
+      handleSubmit(urlParam);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const handleReset = () => {
+    setAppState('idle');
+    setAnalysisResult(null);
+    setDeliberationResult(null);
+    setMasteringResult(null);
+    setAudioUrl(null);
+    setError(null);
+  };
+
+  const handleRunDeliberation = async (targetLufs: number = -14.0, targetTruePeak: number = -1.0) => {
+    if (!analysisResult || !audioUrl) return;
+    setAppState('deliberating');
+    setError(null);
+    try {
+      const result = await runDeliberation(audioUrl, targetLufs, targetTruePeak);
+      setDeliberationResult(result);
+      setAppState('deliberation_results');
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : 'Unknown error occurred during deliberation.');
+      setAppState('results');
+    }
+  };
+
+  const handleRunMastering = async () => {
+    if (!deliberationResult || !audioUrl) return;
+    setAppState('mastering');
+    setError(null);
+    await updateJob(jobId, { status: 'processing', route: 'dsp_only' });
+    try {
+      const result = await runMastering(audioUrl, deliberationResult);
+      setMasteringResult(result);
+      setAppState('mastering_results');
+      await updateJob(jobId, {
+        status: 'completed',
+        lufs_after: result.metrics.lufs_after,
+        true_peak_after: result.metrics.true_peak_after,
+        dynamic_range_after: result.metrics.dynamic_range_after,
+        convergence_loops: result.metrics.convergence_loops,
+        completed_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : 'Unknown error occurred during mastering.');
+      setAppState('deliberation_results');
+      await updateJob(jobId, { status: 'failed', error_message: err instanceof Error ? err.message : 'Unknown error' });
+    }
+  };
+
   return (
-    <>
-      <WebApplicationJsonLd />
-      <OrganizationJsonLd />
-
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/5 via-transparent to-transparent" />
-        <div className="max-w-7xl mx-auto px-6 pt-24 pb-20 relative">
-          <div className="max-w-3xl mx-auto text-center space-y-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-xs text-indigo-300 font-mono">
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
-              AI Dynamic Mastering Engine
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white leading-tight">
-              Listen. You&apos;ll hear it.
-              <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">
-                3 AIs deliberate. Your track evolves.
-              </span>
-            </h1>
-            <p className="text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-              Three AI models independently analyze your audio, debate the ideal parameters,
-              and reach consensus — section by section. Every decision is transparent.
-              <br />
-              Black-box mastering is over.
-            </p>
-            <HeroUrlInput />
-            <p className="text-xs text-zinc-600 max-w-md mx-auto">
-              Upload your audio to Google Drive, set sharing to &quot;Anyone with the link&quot;, and paste the URL.
-              <br />
-              We do not store your audio. Files are processed in memory and immediately discarded.
-            </p>
-            <div className="flex items-center justify-center gap-4 mt-2">
-              <Link
-                href="/features/deliberation"
-                className="text-sm text-zinc-500 hover:text-indigo-400 transition-colors group"
-              >
-                Or see AI deliberation in action
-                <span className="inline-block ml-1 group-hover:translate-x-1 transition-transform">&rarr;</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats */}
-      <section className="border-y border-zinc-800/50">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="text-2xl font-bold text-white font-mono">{stat.value}</div>
-                <div className="text-sm text-zinc-500 mt-1">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="py-24">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-white">Why WhitePrint is different</h2>
-            <p className="mt-4 text-zinc-400 max-w-2xl mx-auto">
-              Other AI mastering returns a result. WhitePrint shows you the reason.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {features.map((feature) => (
-              <Link
-                key={feature.title}
-                href={feature.href}
-                className="group p-8 rounded-xl border border-zinc-800 hover:border-indigo-500/50 bg-zinc-950 transition-all hover:bg-zinc-900/50"
-              >
-                <div className="w-12 h-12 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-6 group-hover:bg-indigo-500/20 transition-colors">
-                  {feature.icon}
-                </div>
-                <div className="text-xs font-mono text-indigo-400/70 mb-2">{feature.subtitle}</div>
-                <h3 className="text-lg font-bold text-white mb-3 group-hover:text-indigo-300 transition-colors">
-                  {feature.title}
-                  <span className="inline-block ml-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">&rarr;</span>
-                </h3>
-                <p className="text-sm text-zinc-400 leading-relaxed">{feature.description}</p>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="py-24 border-t border-zinc-800/50">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-white">Paste a URL. Wait. Done.</h2>
-            <p className="mt-4 text-zinc-400">No file upload. No plugins. No sessions.</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-12">
-            {[
-              {
-                step: '01',
-                title: 'Paste a cloud URL',
-                desc: 'Google Drive, Dropbox, OneDrive, S3, GCS. Just paste the link — we fetch your audio directly.',
-              },
-              {
-                step: '02',
-                title: 'AIs analyze, deliberate, decide',
-                desc: 'BS.1770-4 physical analysis runs first. Then three AIs independently deliberate and vote on section-by-section parameters.',
-              },
-              {
-                step: '03',
-                title: 'Download your master',
-                desc: 'Consensus-driven DSP processing completes. WAV download with before/after metrics and full deliberation logs.',
-              },
-            ].map((item) => (
-              <div key={item.step} className="text-center">
-                <div className="text-4xl font-mono font-bold text-indigo-500/30 mb-4">
-                  {item.step}
-                </div>
-                <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
-                <p className="text-sm text-zinc-400">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Differentiator */}
-      <section className="py-24 border-t border-zinc-800/50">
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-white">
-              &ldquo;Sounds good&rdquo; isn&apos;t good enough.
-            </h2>
-            <p className="mt-4 text-zinc-400">
-              Every parameter has a reason. Every decision has evidence.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 gap-6">
-            {[
-              {
-                label: 'Other AI Mastering',
-                items: [
-                  'Audio in, result out. Black box.',
-                  'No explanation of what changed or why',
-                  'No parameter control',
-                  'Same processing for the entire track',
-                ],
-                bad: true,
-              },
-              {
-                label: 'WhitePrint',
-                items: [
-                  '3 AIs independently recommend parameters with rationale',
-                  'Full deliberation logs — see where they agree and disagree',
-                  'Override any DSP parameter manually',
-                  'Dynamic section-based mastering that follows the music',
-                ],
-                bad: false,
-              },
-            ].map((col) => (
-              <div
-                key={col.label}
-                className={`p-8 rounded-xl border ${
-                  col.bad
-                    ? 'border-zinc-800 bg-zinc-950'
-                    : 'border-indigo-500/50 bg-indigo-500/5'
-                }`}
-              >
-                <h3 className={`text-sm font-bold uppercase tracking-wider mb-6 ${
-                  col.bad ? 'text-zinc-500' : 'text-indigo-400'
-                }`}>
-                  {col.label}
-                </h3>
-                <ul className="space-y-3">
-                  {col.items.map((item) => (
-                    <li key={item} className="flex items-start gap-3 text-sm">
-                      {col.bad ? (
-                        <span className="text-zinc-600 mt-0.5">&#x2715;</span>
-                      ) : (
-                        <span className="text-indigo-400 mt-0.5">&#x2713;</span>
-                      )}
-                      <span className={col.bad ? 'text-zinc-500' : 'text-zinc-300'}>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-24">
-        <div className="max-w-3xl mx-auto px-6 text-center space-y-8">
-          <h2 className="text-3xl font-bold text-white">
-            Try it on your own track.
-          </h2>
-          <p className="text-zinc-400">
-            Free. No signup. No credit card. Just listen.
-          </p>
-          <div className="flex items-center justify-center gap-4 flex-wrap">
-            <Link
-              href="/app"
-              className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg transition-colors"
+    <main className="min-h-screen bg-[#0a0a0a] text-zinc-100 font-sans selection:bg-indigo-500/30 overflow-hidden flex flex-col">
+      {appState !== 'idle' && (
+        <SiteHeader>
+          {(appState === 'results' || appState === 'deliberation_results' || appState === 'mastering_results') && (
+            <button
+              onClick={handleReset}
+              className="text-xs font-mono text-zinc-400 hover:text-white transition-colors px-3 py-1.5 rounded border border-zinc-800 hover:border-zinc-600"
             >
-              Master Now
-            </Link>
-            <Link
-              href="/pricing"
-              className="px-8 py-3.5 border border-zinc-700 hover:border-zinc-500 text-zinc-300 hover:text-white rounded-lg transition-colors"
+              [ NEW_SESSION ]
+            </button>
+          )}
+        </SiteHeader>
+      )}
+
+      <div className="flex-1 relative">
+        <AnimatePresence mode="wait">
+          {appState === 'idle' && (
+            <motion.div
+              key="idle"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+              transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+              className="absolute inset-0 flex items-center justify-center"
             >
-              View Pricing
-            </Link>
-          </div>
-        </div>
-      </section>
-    </>
+              <LandingContent onSubmit={handleSubmit} error={error} />
+            </motion.div>
+          )}
+
+          {appState === 'analyzing' && (
+            <motion.div
+              key="analyzing"
+              initial={{ opacity: 0, scale: 1.05, filter: 'blur(10px)' }}
+              animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
+              transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+              className="absolute inset-0 flex items-center justify-center p-6"
+            >
+              <AnalyzingScreen error={error} />
+            </motion.div>
+          )}
+
+          {appState === 'results' && analysisResult && (
+            <motion.div
+              key="results"
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1], delay: 0.1 }}
+              className="absolute inset-0 overflow-y-auto"
+            >
+              <ResultsDashboard data={analysisResult} onRunDeliberation={handleRunDeliberation} audioUrl={audioUrl} />
+            </motion.div>
+          )}
+
+          {appState === 'deliberating' && (
+            <motion.div
+              key="deliberating"
+              initial={{ opacity: 0, scale: 1.05, filter: 'blur(10px)' }}
+              animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
+              transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+              className="absolute inset-0 flex items-center justify-center p-6"
+            >
+              <DeliberatingScreen error={error} />
+            </motion.div>
+          )}
+
+          {appState === 'deliberation_results' && deliberationResult && (
+            <motion.div
+              key="deliberation_results"
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1], delay: 0.1 }}
+              className="absolute inset-0 overflow-y-auto"
+            >
+              <DeliberationDashboard data={deliberationResult} onRunMastering={handleRunMastering} />
+            </motion.div>
+          )}
+
+          {appState === 'mastering' && (
+            <motion.div
+              key="mastering"
+              initial={{ opacity: 0, scale: 1.05, filter: 'blur(10px)' }}
+              animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
+              transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+              className="absolute inset-0 flex items-center justify-center p-6"
+            >
+              <MasteringScreen error={error} />
+            </motion.div>
+          )}
+
+          {appState === 'mastering_results' && masteringResult && (
+            <motion.div
+              key="mastering_results"
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1], delay: 0.1 }}
+              className="absolute inset-0 overflow-y-auto"
+            >
+              <MasteringDashboard data={masteringResult} audioUrl={audioUrl} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </main>
+  );
+}
+
+export default function AppDashboard() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="w-6 h-6 rounded bg-indigo-500 animate-pulse" />
+      </div>
+    }>
+      <AppDashboardInner />
+    </Suspense>
   );
 }

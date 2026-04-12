@@ -9,7 +9,7 @@ export class ApiError extends Error {
 
 export async function postMaster<T>(body: Record<string, unknown>): Promise<T> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 300_000);
+  const timeout = setTimeout(() => controller.abort(), 600_000);
   let res: Response;
   try {
     res = await fetch('/api/master', {
@@ -21,7 +21,7 @@ export async function postMaster<T>(body: Record<string, unknown>): Promise<T> {
   } catch (err) {
     clearTimeout(timeout);
     if (err instanceof DOMException && err.name === 'AbortError') {
-      throw new ApiError('Request timed out after 5 minutes. The backend may be overloaded.', 408);
+      throw new ApiError('Request timed out after 10 minutes. The backend may be overloaded.', 408);
     }
     throw err;
   }
@@ -47,7 +47,7 @@ export async function postMasterBinary(body: Record<string, unknown>): Promise<{
   headers: Record<string, string>;
 }> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 300_000);
+  const timeout = setTimeout(() => controller.abort(), 600_000);
   let res: Response;
   try {
     res = await fetch('/api/master', {
@@ -59,7 +59,7 @@ export async function postMasterBinary(body: Record<string, unknown>): Promise<{
   } catch (err) {
     clearTimeout(timeout);
     if (err instanceof DOMException && err.name === 'AbortError') {
-      throw new ApiError('Request timed out after 5 minutes. The backend may be overloaded.', 408);
+      throw new ApiError('Request timed out after 10 minutes. The backend may be overloaded.', 408);
     }
     throw err;
   }

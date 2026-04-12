@@ -156,14 +156,14 @@ export default function MasteringScreen() {
             className="w-[3px] rounded-full bg-emerald-500/40"
             animate={{
               height: [
-                4 + Math.random() * 8,
-                8 + Math.random() * 24,
-                4 + Math.random() * 8,
+                4 + ((i * 3) % 8),
+                8 + ((i * 7) % 24),
+                4 + ((i * 5) % 8),
               ],
               opacity: [0.3, 0.8, 0.3],
             }}
             transition={{
-              duration: 0.8 + Math.random() * 0.6,
+              duration: 0.8 + ((i * 11) % 6) * 0.1,
               repeat: Infinity,
               delay: i * 0.03,
             }}

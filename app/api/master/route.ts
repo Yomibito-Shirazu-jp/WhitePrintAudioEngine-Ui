@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-const CONCERTMASTER_URL = process.env.CONCERTMASTER_URL || 'http://localhost:8000';
+const CONCERTMASTER_URL = process.env.CONCERTMASTER_URL || 'https://concertmaster.aimastering.tech';
 const CONCERTMASTER_API_KEY = process.env.CONCERTMASTER_API_KEY || '';
 
 // Free plan limits (no billing record = free)
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 300_000);
+    const timeout = setTimeout(() => controller.abort(), 600_000);
 
     let response: Response;
     try {
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
       clearTimeout(timeout);
       if (err instanceof DOMException && err.name === 'AbortError') {
         return NextResponse.json(
-          { error: 'Backend request timed out after 5 minutes.' },
+          { error: 'Backend request timed out after 10 minutes.' },
           { status: 504 }
         );
       }

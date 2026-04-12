@@ -105,10 +105,12 @@ export default function AnalyzingScreen() {
   const currentPhase = ALL_STEPS[currentStep]?.phase ?? 'FINALIZE';
   const progress = ((currentStep + 1) / ALL_STEPS.length) * 100;
 
-  // Frequency bins for spectrum visualization
-  const spectrumBars = useMemo(() =>
-    Array.from({ length: 32 }, () => 4 + Math.random() * 20), []
-  );
+  // Frequency bins for spectrum visualization - initialize empty for SSR to prevent hydration mismatch
+  const [spectrumBars, setSpectrumBars] = useState<number[]>([]);
+
+  useEffect(() => {
+    setSpectrumBars(Array.from({ length: 32 }, () => 4 + Math.random() * 20));
+  }, []);
 
   return (
     <div className="w-full max-w-lg flex flex-col items-center justify-center">
@@ -244,11 +246,11 @@ export default function AnalyzingScreen() {
             key={i}
             className="w-[4px] rounded-t bg-indigo-500/30"
             animate={{
-              height: [base * 0.3, base + Math.random() * 12, base * 0.5],
+              height: [base * 0.3, base + ((i * 7) % 12), base * 0.5],
               opacity: [0.3, 0.7, 0.3],
             }}
             transition={{
-              duration: 0.6 + Math.random() * 0.4,
+              duration: 0.6 + ((i * 3) % 4) * 0.1,
               repeat: Infinity,
               delay: i * 0.02,
             }}

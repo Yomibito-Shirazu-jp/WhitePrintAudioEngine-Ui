@@ -12,7 +12,7 @@ const jetbrainsMono = JetBrains_Mono({
   variable: '--font-mono',
 });
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://whiteprint.audio';
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.aimastering.tech';
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),

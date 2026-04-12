@@ -12,7 +12,7 @@ export default function SiteHeader({ children }: SiteHeaderProps) {
   const pathname = usePathname();
 
   const navItems = [
-    { href: '/app', label: 'DASHBOARD' },
+    { href: '/', label: 'DASHBOARD' },
     { href: '/app/history', label: 'HISTORY' },
     { href: '/developers/docs', label: 'API_DOCS' },
   ];
@@ -21,14 +21,14 @@ export default function SiteHeader({ children }: SiteHeaderProps) {
     <header className="border-b border-zinc-800/50 bg-zinc-950/50 backdrop-blur-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <Link href="/app" className="flex items-center gap-3">
+          <a href="/" className="flex items-center gap-3">
             <div className="w-6 h-6 rounded bg-indigo-500 flex items-center justify-center">
               <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
             </div>
             <h1 className="font-mono text-sm font-semibold tracking-wider text-zinc-200">
               WhitePrint <span className="text-zinc-500 font-normal">AudioEngine</span>
             </h1>
-          </Link>
+          </a>
           <nav className="hidden md:flex items-center gap-4 text-xs font-mono">
             {navItems.map((item) => (
               <Link
