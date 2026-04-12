@@ -33,7 +33,7 @@ const PHASES = [
   {
     name: 'ENVELOPES',
     steps: [
-      { text: 'Generating 1-sec resolution time-series', metric: '9 dimensions' },
+      { text: 'Generating 0.1s resolution time-series', metric: '9 dimensions' },
       { text: 'LUFS envelope extraction', metric: null },
       { text: 'Crest factor (peak-to-RMS) per chunk', metric: null },
       { text: 'Stereo width & mono correlation tracking', metric: null },
@@ -44,15 +44,27 @@ const PHASES = [
   {
     name: 'SECTIONS',
     steps: [
-      { text: 'Detecting energy shift boundaries', metric: 'σ + 1.5×std' },
-      { text: 'Merging micro-sections (< 8s)', metric: null },
-      { text: 'Computing per-section aggregate metrics', metric: null },
+      { text: 'Smoothing LUFS+Width (3s moving avg)', metric: 'macro-form' },
+      { text: 'Peak-picking novelty boundaries', metric: 'LUFS 70% + Width 30%' },
+      { text: 'Enforcing min 8s section length', metric: null },
+    ],
+  },
+  {
+    name: 'SEMANTICS',
+    steps: [
+      { text: 'Booting Gemini Native Audio Engine', metric: 'multimodal' },
+      { text: 'Slicing SEC_0 for AI audition', metric: null },
+      { text: 'Identifying instruments & musical scene...', metric: null },
+      { text: 'Slicing SEC_1 for AI audition', metric: null },
+      { text: 'Identifying instruments & musical scene...', metric: null },
+      { text: 'Slicing SEC_2 for AI audition', metric: null },
+      { text: 'Identifying instruments & musical scene...', metric: null },
     ],
   },
   {
     name: 'PROBLEMS',
     steps: [
-      { text: 'Evaluating harshness risk (2-5kHz energy)', metric: null },
+      { text: 'Evaluating harshness risk (2-6kHz energy)', metric: null },
       { text: 'Evaluating mud risk (200-500Hz density)', metric: null },
       { text: 'Checking mono compatibility (< 120Hz)', metric: null },
       { text: 'Flagging clipping / true peak violations', metric: null },
@@ -61,8 +73,8 @@ const PHASES = [
   {
     name: 'FINALIZE',
     steps: [
-      { text: 'Assembling JSON payload', metric: null },
-      { text: 'Attaching circuit envelope arrays', metric: null },
+      { text: 'Merging DSP metrics with AI Semantic Context', metric: null },
+      { text: 'Assembling JSON payload + circuit envelopes', metric: null },
     ],
   },
 ];
