@@ -1,34 +1,90 @@
 'use client';
 
+import { useState } from 'react';
 import type { MasteringResult } from '@/types/mastering';
 import { motion } from 'framer-motion';
-import { Download, Zap, CheckCircle2, Activity, Volume2, Maximize } from 'lucide-react';
+import { Download, Zap, CheckCircle2, Activity, Volume2, Maximize, ThumbsUp, ThumbsDown, Share2, Link2, Check } from 'lucide-react';
 import ABPlayer from './ab-player';
 
 interface MasteringDashboardProps {
   data: MasteringResult;
   audioUrl: string | null;
+  onReset?: () => void;
 }
 
-export default function MasteringDashboard({ data, audioUrl }: MasteringDashboardProps) {
+export default function MasteringDashboard({ data, audioUrl, onReset }: MasteringDashboardProps) {
+  const [rating, setRating] = useState<'good' | 'bad' | null>(null);
+  const [copied, setCopied] = useState(false);
+
   if (!data) return null;
   const metrics = data?.metrics ?? {} as any;
 
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'WhitePrint Mastered Track', url: shareUrl });
+      } catch { /* user cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6 pb-24">
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-xl font-mono font-bold text-white flex items-center gap-3">
-          <Zap className="w-6 h-6 text-emerald-400" />
-          MASTERING_COMPLETE
-        </h2>
+      <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
         <div className="flex items-center gap-4">
+          <h2 className="text-xl font-mono font-bold text-white flex items-center gap-3">
+            <Zap className="w-6 h-6 text-emerald-400" />
+            MASTERING_COMPLETE
+          </h2>
+          {onReset && (
+            <button onClick={onReset} className="text-[10px] font-mono text-zinc-500 hover:text-zinc-300 transition-colors uppercase border border-zinc-800 rounded px-2 py-1 bg-zinc-900/50">
+              [ New_Session ]
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          {/* Rating */}
+          <div className="flex items-center gap-1 border border-zinc-800 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setRating(rating === 'good' ? null : 'good')}
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-mono transition-colors ${
+                rating === 'good' ? 'bg-emerald-600/20 text-emerald-400' : 'text-zinc-400 hover:text-emerald-400 hover:bg-zinc-900'
+              }`}
+            >
+              <ThumbsUp className="w-3.5 h-3.5" />
+            </button>
+            <div className="w-px h-5 bg-zinc-800" />
+            <button
+              onClick={() => setRating(rating === 'bad' ? null : 'bad')}
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-mono transition-colors ${
+                rating === 'bad' ? 'bg-red-600/20 text-red-400' : 'text-zinc-400 hover:text-red-400 hover:bg-zinc-900'
+              }`}
+            >
+              <ThumbsDown className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Share */}
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-mono text-zinc-400 hover:text-white border border-zinc-800 rounded-lg hover:border-zinc-600 transition-colors"
+          >
+            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
+            {copied ? 'Copied' : 'Share'}
+          </button>
+
+          {/* Download */}
           <a
             href={data.download_url}
-            download
-            className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-bold transition-colors shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+            download="mastered-track.wav"
+            className="flex items-center gap-2 px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-bold transition-colors shadow-[0_0_20px_rgba(16,185,129,0.2)]"
           >
             <Download className="w-4 h-4" />
-            DOWNLOAD MASTER
+            Download
           </a>
         </div>
       </div>
