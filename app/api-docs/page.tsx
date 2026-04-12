@@ -31,7 +31,7 @@ export default function CurlGenPage() {
   }'`;
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(curlCommand);
+    navigator.clipboard.writeText(curlCommand).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

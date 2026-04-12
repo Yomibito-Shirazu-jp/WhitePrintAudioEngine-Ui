@@ -287,7 +287,7 @@ export default function SettingsPage() {
                 </code>
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText(newKeySecret);
+                    navigator.clipboard.writeText(newKeySecret).catch(() => {});
                     setKeyCopied(true);
                     setTimeout(() => setKeyCopied(false), 2000);
                   }}

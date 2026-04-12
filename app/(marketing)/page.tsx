@@ -165,6 +165,7 @@ function AppDashboardInner() {
         true_peak_after: result.metrics.true_peak_after,
         dynamic_range_after: result.metrics.dynamic_range_after,
         convergence_loops: result.metrics.convergence_loops,
+        output_url: result.download_url,
         completed_at: new Date().toISOString(),
       });
     } catch (err) {
@@ -270,7 +271,7 @@ function AppDashboardInner() {
             transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1], delay: 0.1 }}
             className="flex-1 pt-4 pb-24"
           >
-            <MasteringDashboard data={masteringResult} audioUrl={audioUrl} onReset={handleReset} />
+            <MasteringDashboard data={masteringResult} audioUrl={audioUrl} onReset={handleReset} deliberation={deliberationResult} analysis={analysisResult} />
           </motion.div>
         )}
       </AnimatePresence>

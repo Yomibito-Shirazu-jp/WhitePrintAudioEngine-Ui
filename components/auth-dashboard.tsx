@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { PlayCircle, Clock, Zap, ExternalLink, CheckCircle2, AlertCircle, Activity, FileAudio, Music, Terminal, ChevronDown, ChevronRight, Volume2 } from 'lucide-react';
+import { PlayCircle, Clock, Zap, ExternalLink, CheckCircle2, AlertCircle, Activity, FileAudio, Music, Terminal, ChevronDown, ChevronRight, Volume2, Download } from 'lucide-react';
 import HeroUrlInput from '@/components/marketing/hero-url-input';
+import ABPlayer from '@/components/ab-player';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
@@ -24,6 +25,7 @@ type Job = {
   completed_at: string | null;
   consensus_opinions: Record<string, unknown> | null;
   analysis_data: Record<string, unknown> | null;
+  output_url: string | null;
 };
 
 type AuthDashboardContentProps = {
@@ -43,7 +45,7 @@ export default function AuthDashboardContent({ user, onSubmit, error }: AuthDash
       const supabase = createClient();
       const { data } = await supabase
         .from('jobs')
-        .select('id, input_gcs_path, input_file_name, status, route, lufs_before, lufs_after, true_peak_before, true_peak_after, bpm, musical_key, duration_sec, created_at, completed_at, consensus_opinions, analysis_data')
+        .select('id, input_gcs_path, input_file_name, status, route, lufs_before, lufs_after, true_peak_before, true_peak_after, bpm, musical_key, duration_sec, created_at, completed_at, consensus_opinions, analysis_data, output_url')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(10);
@@ -227,6 +229,23 @@ export default function AuthDashboardContent({ user, onSubmit, error }: AuthDash
                             </div>
                           )}
                         </div>
+
+                        {/* A/B Player */}
+                        {job.status === 'completed' && job.output_url && (
+                          <div className="mt-4 space-y-3">
+                            <ABPlayer audioUrl={job.input_gcs_path} masteredUrl={job.output_url} />
+                            <div className="flex justify-end">
+                              <a
+                                href={job.output_url}
+                                download
+                                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-mono font-bold text-white rounded-lg transition-colors bg-emerald-600 hover:bg-emerald-500"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                                Download Master
+                              </a>
+                            </div>
+                          </div>
+                        )}
 
                         {/* Consensus opinions (deliberation log) */}
                         {job.consensus_opinions && (

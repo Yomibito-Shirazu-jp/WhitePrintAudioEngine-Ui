@@ -1,12 +1,12 @@
 import type { DeliberationOutput } from '@/types/deliberation';
 import type { MasteringResult } from '@/types/mastering';
-import { postMasterBinary } from '@/lib/api-client';
+import { postMaster } from '@/lib/api-client';
 
 export async function runMastering(
   audioUrl: string,
   deliberation: DeliberationOutput,
 ): Promise<MasteringResult> {
-  const { blob, headers } = await postMasterBinary({
+  const resultData = await postMaster<{ download_url: string; metrics?: any }>({
     audio_url: audioUrl,
     route: 'dsp_only',
     manual_params: deliberation.adopted_params,
@@ -14,7 +14,7 @@ export async function runMastering(
     target_true_peak: deliberation.target_true_peak,
   });
 
-  const downloadUrl = URL.createObjectURL(blob);
+  const downloadUrl = resultData.download_url;
 
   let metrics: MasteringResult['metrics'] = {
     lufs_before: 0,
@@ -29,14 +29,8 @@ export async function runMastering(
     engine_version: 'v2_14stage',
   };
 
-  try {
-    const metricsHeader = headers['X-Metrics'];
-    if (metricsHeader) {
-      const parsed = JSON.parse(metricsHeader);
-      metrics = { ...metrics, ...parsed };
-    }
-  } catch (error) {
-    console.warn('Failed to parse X-Metrics header, using defaults:', error);
+  if (resultData.metrics) {
+    metrics = { ...metrics, ...resultData.metrics };
   }
 
   return {
