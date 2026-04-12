@@ -1,8 +1,6 @@
 import Link from 'next/link';
 import { WebApplicationJsonLd, OrganizationJsonLd } from '@/components/seo/json-ld';
 import HeroUrlInput from '@/components/marketing/hero-url-input';
-import MarketingHeader from '@/components/layout/marketing-header';
-import MarketingFooter from '@/components/layout/marketing-footer';
 
 const features = [
   {
@@ -53,7 +51,6 @@ const stats = [
 export default function LandingContent({ onSubmit, error }: { onSubmit: (url: string) => void; error?: string | null }) {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-100 flex flex-col w-full">
-      <MarketingHeader />
       <main className="flex-1 w-full">
         <WebApplicationJsonLd />
         <OrganizationJsonLd />
@@ -288,7 +285,6 @@ export default function LandingContent({ onSubmit, error }: { onSubmit: (url: st
           </div>
         </section>
       </main>
-      <MarketingFooter />
     </div>
   );
 }
