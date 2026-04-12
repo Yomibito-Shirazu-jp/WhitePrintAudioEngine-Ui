@@ -70,14 +70,14 @@ export default function DeliberationDashboard({ data, onRunMastering }: Delibera
               <Sliders className="w-4 h-4" /> Adopted_Parameters
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <MetricBox label="TARGET_LUFS" value={`${data.target_lufs} LUFS`} />
-              <MetricBox label="TRUE_PEAK" value={`${data.target_true_peak} dBTP`} />
-              <MetricBox label="EQ_LOW_SHELF" value={data.adopted_params.eq_low_shelf_gain_db} />
-              <MetricBox label="EQ_HIGH_SHELF" value={data.adopted_params.eq_high_shelf_gain_db} />
-              <MetricBox label="COMP_THRESH" value={data.adopted_params.comp_threshold_db} />
-              <MetricBox label="COMP_RATIO" value={data.adopted_params.comp_ratio} />
-              <MetricBox label="STEREO_WIDTH" value={data.adopted_params.stereo_width} />
-              <MetricBox label="LIMITER_CEIL" value={data.adopted_params.limiter_ceil_db} />
+              <MetricBox label="TARGET_LUFS" value={`${data?.target_lufs ?? '—'} LUFS`} />
+              <MetricBox label="TRUE_PEAK" value={`${data?.target_true_peak ?? '—'} dBTP`} />
+              <MetricBox label="EQ_LOW_SHELF" value={data?.adopted_params?.eq_low_shelf_gain_db ?? 0} />
+              <MetricBox label="EQ_HIGH_SHELF" value={data?.adopted_params?.eq_high_shelf_gain_db ?? 0} />
+              <MetricBox label="COMP_THRESH" value={data?.adopted_params?.comp_threshold_db ?? 0} />
+              <MetricBox label="COMP_RATIO" value={data?.adopted_params?.comp_ratio ?? 0} />
+              <MetricBox label="STEREO_WIDTH" value={data?.adopted_params?.stereo_width ?? 0} />
+              <MetricBox label="LIMITER_CEIL" value={data?.adopted_params?.limiter_ceil_db ?? 0} />
             </div>
           </div>
 
@@ -108,7 +108,7 @@ export default function DeliberationDashboard({ data, onRunMastering }: Delibera
             </h3>
             <div className="space-y-4">
               {(data.dynamic_mastering_sections ?? []).map((section, index) => {
-                const m = section.source_metrics;
+                const m = section?.source_metrics ?? {} as any;
                 const fmtTime = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
                 const hasOverrides = Object.keys(section.override_sources ?? {}).length > 0;
                 const hasDiff = Object.keys(section.diff_from_global ?? {}).length > 0;
@@ -194,7 +194,7 @@ export default function DeliberationDashboard({ data, onRunMastering }: Delibera
                     {hasCoupling && (
                       <div className="space-y-1">
                         <div className="text-[10px] font-mono text-amber-500 uppercase">DSP Coupling Applied</div>
-                        {section.dsp_coupling_applied.map((rule, rIdx) => (
+                        {(section.dsp_coupling_applied ?? []).map((rule, rIdx) => (
                           <div key={rIdx} className="text-[10px] font-mono text-zinc-500 bg-zinc-900 p-2 rounded border border-zinc-800/30">
                             <span className="text-amber-400">[{rule.rule_name}]</span> {rule.reason}
                           </div>

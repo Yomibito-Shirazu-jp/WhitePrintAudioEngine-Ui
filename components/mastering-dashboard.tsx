@@ -11,7 +11,8 @@ interface MasteringDashboardProps {
 }
 
 export default function MasteringDashboard({ data, audioUrl }: MasteringDashboardProps) {
-  const { metrics } = data;
+  if (!data) return null;
+  const metrics = data?.metrics ?? {} as any;
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6 pb-24">
