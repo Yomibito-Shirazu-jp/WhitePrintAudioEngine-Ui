@@ -12,18 +12,22 @@ RUN npm run build
 FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+ENV PORT=8080
+ENV HOSTNAME="0.0.0.0"
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-COPY --from=builder /app/public ./public
+# 1. standalone server (server.js + node_modules)
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+
+# 2. static assets (CSS/JS) — MUST be at .next/static relative to server.js
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-USER nextjs
+# 3. public folder (favicon, images)
+COPY --from=builder /app/public ./public
 
-ENV PORT=8080
-ENV HOSTNAME="0.0.0.0"
+USER nextjs
 EXPOSE 8080
 
 CMD ["node", "server.js"]
