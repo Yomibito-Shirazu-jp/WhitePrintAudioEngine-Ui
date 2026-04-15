@@ -4,6 +4,7 @@ import { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { HelpCircle, Upload, FileAudio, Loader2 } from 'lucide-react';
 import GDriveGuide from '@/components/gdrive-guide';
+import { createClient } from '@/lib/supabase/client';
 
 const ACCEPTED_EXTENSIONS = '.wav,.flac,.aiff,.aif,.mp3';
 const MAX_FILE_SIZE = 200 * 1024 * 1024;
@@ -38,24 +39,27 @@ export default function HeroUrlInput({ onSubmit }: { onSubmit?: (url: string) =>
     setUploadMsg(`Uploading ${file.name}...`);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      // Direct browser → Supabase Storage upload (bypasses Vercel 4.5MB limit)
+      const supabase = createClient();
+      const timestamp = Date.now();
+      const randomSuffix = Math.random().toString(36).slice(2, 8);
+      const safeName = file.name.replace(/[^a-zA-Z0-9._\-\u3000-\u9FFF\uF900-\uFAFF]/g, '_');
+      const path = `uploads/${timestamp}-${randomSuffix}/${safeName}`;
 
-      const resp = await fetch('/api/upload', { method: 'POST', body: formData });
+      const { error: uploadError } = await supabase.storage
+        .from('audio-uploads')
+        .upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false });
 
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({ error: `Upload failed (${resp.status})` }));
-        throw new Error(err.error || `Upload failed: ${resp.status}`);
-      }
+      if (uploadError) throw new Error(`Storage upload failed: ${uploadError.message}`);
 
-      const data = await resp.json();
+      const { data: publicUrlData } = supabase.storage.from('audio-uploads').getPublicUrl(path);
       setIsUploading(false);
       setUploadMsg(null);
 
       if (onSubmit) {
-        onSubmit(data.url);
+        onSubmit(publicUrlData.publicUrl);
       } else {
-        router.push(`/?url=${encodeURIComponent(data.url)}`);
+        router.push(`/?url=${encodeURIComponent(publicUrlData.publicUrl)}`);
       }
     } catch (err) {
       setIsUploading(false);

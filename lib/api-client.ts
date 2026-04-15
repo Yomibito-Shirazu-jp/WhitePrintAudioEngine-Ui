@@ -99,99 +99,47 @@ export async function postMasterBinary(body: Record<string, unknown>): Promise<{
   );
 }
 
-/** Upload a file via multipart form and get JSON back */
+/** Upload a file to Supabase Storage, then POST the URL to /api/master */
 export async function postMasterUpload<T>(file: File, fields: Record<string, string>): Promise<T> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 600_000);
+  // Step 1: Upload raw file directly to Supabase Storage (no Vercel size limit)
+  const { createClient } = await import('@/lib/supabase/client');
+  const supabase = createClient();
+  const timestamp = Date.now();
+  const randomSuffix = Math.random().toString(36).slice(2, 8);
+  const safeName = file.name.replace(/[^a-zA-Z0-9._\-\u3000-\u9FFF\uF900-\uFAFF]/g, '_');
+  const path = `uploads/${timestamp}-${randomSuffix}/${safeName}`;
 
-  const form = new FormData();
-  form.append('file', file);
-  for (const [k, v] of Object.entries(fields)) {
-    form.append(k, v);
-  }
+  const { error: uploadError } = await supabase.storage
+    .from('audio-uploads')
+    .upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false });
+  if (uploadError) throw new ApiError(`Storage upload failed: ${uploadError.message}`, 500);
 
-  let res: Response;
-  try {
-    res = await fetch('/api/upload', {
-      method: 'POST',
-      body: form,
-      signal: controller.signal,
-    });
-  } catch (err) {
-    clearTimeout(timeout);
-    if (err instanceof DOMException && err.name === 'AbortError') {
-      throw new ApiError('Request timed out after 10 minutes.', 408);
-    }
-    throw err;
-  }
-  clearTimeout(timeout);
+  const { data: publicUrlData } = supabase.storage.from('audio-uploads').getPublicUrl(path);
 
-  if (!res.ok) {
-    let message = `Backend error (${res.status})`;
-    try {
-      const err = await res.json();
-      if (err.error) message = err.error;
-      else if (err.detail) message = err.detail;
-    } catch { /* not JSON */ }
-    throw new ApiError(message, res.status);
-  }
-
-  return res.json() as Promise<T>;
+  // Step 2: Pass the public URL + fields to /api/master as JSON
+  return postMaster<T>({ ...fields, audio_url: publicUrlData.publicUrl });
 }
 
-/** Upload a file via multipart form and get audio binary back */
+/** Upload a file to Supabase Storage, then POST to /api/master expecting audio binary back */
 export async function postMasterUploadBinary(file: File, fields: Record<string, string>): Promise<{
   blob: Blob;
   headers: Record<string, string>;
 }> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 600_000);
+  // Step 1: Upload raw file directly to Supabase Storage
+  const { createClient } = await import('@/lib/supabase/client');
+  const supabase = createClient();
+  const timestamp = Date.now();
+  const randomSuffix = Math.random().toString(36).slice(2, 8);
+  const safeName = file.name.replace(/[^a-zA-Z0-9._\-\u3000-\u9FFF\uF900-\uFAFF]/g, '_');
+  const path = `uploads/${timestamp}-${randomSuffix}/${safeName}`;
 
-  const form = new FormData();
-  form.append('file', file);
-  for (const [k, v] of Object.entries(fields)) {
-    form.append(k, v);
-  }
+  const { error: uploadError } = await supabase.storage
+    .from('audio-uploads')
+    .upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false });
+  if (uploadError) throw new ApiError(`Storage upload failed: ${uploadError.message}`, 500);
 
-  let res: Response;
-  try {
-    res = await fetch('/api/upload', {
-      method: 'POST',
-      body: form,
-      signal: controller.signal,
-    });
-  } catch (err) {
-    clearTimeout(timeout);
-    if (err instanceof DOMException && err.name === 'AbortError') {
-      throw new ApiError('Request timed out after 10 minutes.', 408);
-    }
-    throw err;
-  }
-  clearTimeout(timeout);
+  const { data: publicUrlData } = supabase.storage.from('audio-uploads').getPublicUrl(path);
 
-  if (!res.ok) {
-    let message = `Backend error (${res.status})`;
-    try {
-      const err = await res.json();
-      if (err.error) message = err.error;
-      else if (err.detail) message = err.detail;
-    } catch { /* not JSON */ }
-    throw new ApiError(message, res.status);
-  }
-
-  const contentType = res.headers.get('content-type') || '';
-  if (contentType.includes('audio/')) {
-    const blob = await res.blob();
-    return {
-      blob,
-      headers: {
-        'X-Route': res.headers.get('X-Route') || '',
-        'X-Elapsed-Ms': res.headers.get('X-Elapsed-Ms') || '',
-        'X-Metrics': res.headers.get('X-Metrics') || '',
-      },
-    };
-  }
-
-  const data = await res.json();
-  throw new ApiError(data.error || 'Expected audio response but received JSON', 422);
+  // Step 2: Pass the public URL + fields to /api/master
+  return postMasterBinary({ ...fields, audio_url: publicUrlData.publicUrl });
 }
