@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Terminal, Copy, CheckCircle2 } from 'lucide-react';
-import SiteHeader from '@/components/site-header';
+import MarketingHeader from '@/components/layout/marketing-header';
 
 const ROUTE_OPTIONS = [
   { value: 'full', label: 'full — Analyze + Deliberation + Mastering' },
@@ -31,14 +31,14 @@ export default function CurlGenPage() {
   }'`;
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(curlCommand);
+    navigator.clipboard.writeText(curlCommand).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-100 font-sans">
-    <SiteHeader />
+    <MarketingHeader />
     <div className="max-w-5xl mx-auto p-6 space-y-8">
       <div className="flex justify-between items-center">
         <div>

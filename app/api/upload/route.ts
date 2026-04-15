@@ -1,131 +1,158 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const CONCERTMASTER_URL = process.env.CONCERTMASTER_URL || 'https://concertmaster.aimastering.tech';
-const CONCERTMASTER_API_KEY = process.env.CONCERTMASTER_API_KEY || '';
-
-export const config = {
-  api: { bodyParser: false },
-};
-
 /**
  * POST /api/upload
- * Accepts a multipart form with:
- *   - file: the audio file (WAV, FLAC, AIFF, MP3)
- *   - route: mastering pipeline route (analyze_only, deliberation_only, dsp_only, full)
- *   - target_lufs (optional)
- *   - target_true_peak (optional)
- *   - manual_params (optional JSON string)
  *
- * Forwards the file to Concertmaster's /api/v1/jobs/master-upload endpoint.
- * If Concertmaster doesn't support file upload, we serve the file locally via a temp URL.
+ * Receives an audio file via multipart/form-data, uploads it to the
+ * GCS source bucket, and returns the public GCS URL that the pipeline
+ * (Concertmaster → Audition → Deliberation → Rendition-DSP) can fetch.
+ *
+ * Required env vars:
+ *   GCS_SOURCE_BUCKET  — e.g. "aidriven-mastering-fyqu-source-bucket"
+ *
+ * Authentication is done via Google Application Default Credentials
+ * (the Cloud Run service account already has Storage Object Admin role).
  */
-export async function POST(request: NextRequest) {
-  if (!CONCERTMASTER_API_KEY) {
-    return NextResponse.json(
-      { error: 'Server misconfiguration: CONCERTMASTER_API_KEY is not set.' },
-      { status: 500 }
-    );
-  }
 
+const GCS_SOURCE_BUCKET = process.env.GCS_SOURCE_BUCKET || 'aidriven-mastering-fyqu-source-bucket';
+
+// 200 MB hard limit — matches Concertmaster's MAX_AUDIO_SIZE
+const MAX_FILE_SIZE = 200 * 1024 * 1024;
+
+const ALLOWED_TYPES = new Set([
+  'audio/wav',
+  'audio/x-wav',
+  'audio/wave',
+  'audio/flac',
+  'audio/x-flac',
+  'audio/aiff',
+  'audio/x-aiff',
+  'audio/mpeg',
+  'audio/mp3',
+]);
+
+export const maxDuration = 120; // 2 minutes max for large uploads
+export const dynamic = 'force-dynamic';
+
+export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
-    const route = (formData.get('route') as string) || 'analyze_only';
-    const targetLufs = formData.get('target_lufs');
-    const targetTruePeak = formData.get('target_true_peak');
-    const manualParams = formData.get('manual_params');
 
     if (!file) {
-      return NextResponse.json({ error: 'No file provided.' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'No file provided. Include a "file" field in multipart form data.' },
+        { status: 400 },
+      );
     }
 
     // Validate file type
-    const validTypes = ['audio/wav', 'audio/x-wav', 'audio/flac', 'audio/aiff', 'audio/x-aiff', 'audio/mpeg', 'audio/mp3'];
-    const ext = file.name.toLowerCase().split('.').pop();
-    const validExts = ['wav', 'flac', 'aiff', 'aif', 'mp3'];
-    if (!validTypes.includes(file.type) && !validExts.includes(ext || '')) {
+    const mimeType = file.type.toLowerCase();
+    if (!ALLOWED_TYPES.has(mimeType)) {
       return NextResponse.json(
-        { error: `Unsupported file type: ${file.type || ext}. Supported: WAV, FLAC, AIFF, MP3.` },
-        { status: 400 }
+        { error: `Unsupported file type: ${mimeType}. Accepted: WAV, FLAC, AIFF, MP3.` },
+        { status: 400 },
       );
     }
 
-    // Validate file size (max 200MB)
-    if (file.size > 200 * 1024 * 1024) {
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: 'File too large. Maximum size is 200MB.' },
-        { status: 400 }
+        { error: `File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB. Max is ${MAX_FILE_SIZE / 1024 / 1024}MB.` },
+        { status: 413 },
       );
     }
 
-    // Forward to Concertmaster as multipart/form-data
-    const upstreamForm = new FormData();
-    upstreamForm.append('file', file);
-    upstreamForm.append('route', route);
-    if (targetLufs) upstreamForm.append('target_lufs', targetLufs.toString());
-    if (targetTruePeak) upstreamForm.append('target_true_peak', targetTruePeak.toString());
-    if (manualParams) upstreamForm.append('manual_params', manualParams.toString());
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 600_000);
-
-    let response: Response;
-    try {
-      response = await fetch(`${CONCERTMASTER_URL}/api/v1/jobs/master-upload`, {
-        method: 'POST',
-        headers: {
-          'X-Api-Key': CONCERTMASTER_API_KEY,
-        },
-        body: upstreamForm,
-        signal: controller.signal,
-      });
-    } catch (err) {
-      clearTimeout(timeout);
-      if (err instanceof DOMException && err.name === 'AbortError') {
-        return NextResponse.json(
-          { error: 'Backend request timed out after 10 minutes.' },
-          { status: 504 }
-        );
-      }
-      throw err;
-    }
-    clearTimeout(timeout);
-
-    const contentType = response.headers.get('content-type') || '';
-
-    // Audio response (mastered file)
-    if (contentType.includes('audio/')) {
-      const audioBuffer = await response.arrayBuffer();
-      return new NextResponse(audioBuffer, {
-        status: response.status,
-        headers: {
-          'Content-Type': contentType,
-          'X-Route': response.headers.get('X-Route') || '',
-          'X-Elapsed-Ms': response.headers.get('X-Elapsed-Ms') || '',
-          'X-Analysis': response.headers.get('X-Analysis') || '',
-          'X-Deliberation': response.headers.get('X-Deliberation') || '',
-          'X-Metrics': response.headers.get('X-Metrics') || '',
-        },
-      });
-    }
-
-    // JSON response (analysis / deliberation results)
-    const data = await response.json();
-
-    if (!response.ok) {
-      const raw = data.detail || data.error || `Backend error: ${response.status}`;
+    if (file.size < 44) {
       return NextResponse.json(
-        { error: raw, detail: raw },
-        { status: response.status }
+        { error: 'File too small to be valid audio.' },
+        { status: 400 },
       );
     }
 
-    return NextResponse.json(data);
+    // Generate unique object name preserving original filename
+    const timestamp = Date.now();
+    const randomSuffix = Math.random().toString(36).slice(2, 8);
+    const safeName = file.name.replace(/[^a-zA-Z0-9._\-\u3000-\u9FFF\uF900-\uFAFF]/g, '_');
+    const objectName = `uploads/${timestamp}-${randomSuffix}/${safeName}`;
+
+    // Read file into buffer
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Upload to GCS using the JSON API (no SDK dependency needed)
+    const { access_token } = await getAccessToken();
+
+    const uploadUrl = `https://storage.googleapis.com/upload/storage/v1/b/${encodeURIComponent(GCS_SOURCE_BUCKET)}/o?uploadType=media&name=${encodeURIComponent(objectName)}`;
+
+    const gcsResponse = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${access_token}`,
+        'Content-Type': mimeType || 'application/octet-stream',
+      },
+      body: buffer,
+    });
+
+    if (!gcsResponse.ok) {
+      const errorText = await gcsResponse.text();
+      console.error(`[upload] GCS upload failed: ${gcsResponse.status} ${errorText}`);
+      return NextResponse.json(
+        { error: 'Failed to upload file to storage.' },
+        { status: 502 },
+      );
+    }
+
+    // Construct the public URL
+    const gcsUrl = `https://storage.googleapis.com/${GCS_SOURCE_BUCKET}/${encodeURIComponent(objectName)}`;
+
+    console.log(`[upload] Success: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB) → ${gcsUrl}`);
+
+    return NextResponse.json({
+      url: gcsUrl,
+      object_name: objectName,
+      file_name: file.name,
+      file_size: file.size,
+    });
+
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown upload error';
+    console.error(`[upload] Error: ${message}`);
     return NextResponse.json(
       { error: `Upload failed: ${message}` },
-      { status: 502 }
+      { status: 500 },
+    );
+  }
+}
+
+
+/**
+ * Get an OAuth2 access token using metadata server (Cloud Run)
+ * or fall back to a service account key file (local dev).
+ */
+async function getAccessToken(): Promise<{ access_token: string }> {
+  // On Cloud Run: use the metadata server
+  try {
+    const metadataUrl = 'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token';
+    const resp = await fetch(metadataUrl, {
+      headers: { 'Metadata-Flavor': 'Google' },
+    });
+    if (resp.ok) {
+      return await resp.json();
+    }
+  } catch {
+    // Not on Cloud Run — fall through to local auth
+  }
+
+  // Local development: use gcloud CLI's access token
+  const { execSync } = await import('child_process');
+  try {
+    const token = execSync('gcloud auth print-access-token', { encoding: 'utf-8' }).trim();
+    return { access_token: token };
+  } catch {
+    throw new Error(
+      'Cannot obtain GCP access token. On Cloud Run, the metadata server must be accessible. ' +
+      'Locally, run `gcloud auth login` first.'
     );
   }
 }

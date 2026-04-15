@@ -1,364 +1,316 @@
-'use client';
+import Link from 'next/link';
+import { WebApplicationJsonLd, OrganizationJsonLd } from '@/components/seo/json-ld';
+import HeroUrlInput from '@/components/marketing/hero-url-input';
 
-import { useState, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Link2, AlertCircle, ChevronDown, ChevronUp, Zap, Cpu, BarChart3, Upload, FileAudio, X } from 'lucide-react';
-import GdriveGuideModal, {
-  isGdriveUrl,
-  isGdriveGuideDismissed,
-} from '@/components/gdrive-guide-modal';
-
-interface LandingContentProps {
-  onSubmit: (url: string) => void;
-  onFileSubmit: (file: File) => void;
-  error: string | null;
-}
-
-const PROVIDER_HINTS = [
-  { name: 'Suno', hint: 'Paste the song page URL — we auto-extract the audio' },
-  { name: 'SoundCloud', hint: 'Paste the track page URL — we auto-extract the stream' },
-  { name: 'Google Drive', hint: 'Share → Anyone with the link → Copy link' },
-  { name: 'Dropbox', hint: 'Share → Copy link (auto-converted to direct download)' },
-  { name: 'OneDrive', hint: 'Share → Anyone with the link → Copy link' },
-  { name: 'Direct URL', hint: 'Any HTTPS link to WAV, FLAC, AIFF, or MP3' },
+const features = [
+  {
+    title: 'AI Reads Your Sound',
+    subtitle: 'BS.1770-4 Physical Analysis',
+    description:
+      'Loudness, true peak, dynamics, spectral balance, stereo width. Broadcast-standard measurement exposes the truth of your audio in hard numbers.',
+    href: '/features/analysis',
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+      </svg>
+    ),
+  },
+  {
+    title: '3 AIs Deliberate. Then Decide.',
+    subtitle: 'Multi-LLM Ensemble Engine',
+    description:
+      'OpenAI, Anthropic, Google. Three independent AIs analyze your track, debate the parameters, and reach consensus. Every recommendation, every rationale — visible.',
+    href: '/features/deliberation',
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+      </svg>
+    ),
+  },
+  {
+    title: 'Mastering That Moves With the Music',
+    subtitle: 'AI Dynamic DSP Chain',
+    description:
+      'Intro, verse, chorus, outro — different EQ, compression, and limiting for each section. Not static one-size-fits-all. Dynamic mastering that follows your song.',
+    href: '/features/mastering',
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+      </svg>
+    ),
+  },
 ];
 
-const FEATURES = [
-  { icon: BarChart3, label: 'BS.1770-4 Analysis', desc: 'ITU loudness standard' },
-  { icon: Cpu, label: 'Multi-LLM Deliberation', desc: 'OpenAI · Claude · Gemini ensemble' },
-  { icon: Zap, label: '14-Stage DSP', desc: 'Automated mastering pipeline' },
+const stats = [
+  { value: 'BS.1770-4', label: 'Broadcast Standard' },
+  { value: '3 AIs', label: 'Deliberate Together' },
+  { value: '25+', label: 'DSP Parameters' },
+  { value: 'REST API', label: 'Full Automation' },
 ];
 
-const ACCEPTED_EXTS = ['.wav', '.flac', '.aiff', '.aif', '.mp3'];
-const ACCEPTED_MIME = ['audio/wav', 'audio/x-wav', 'audio/flac', 'audio/aiff', 'audio/x-aiff', 'audio/mpeg', 'audio/mp3'];
-
-function isValidAudioUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
-  } catch {
-    return false;
-  }
-}
-
-function isValidAudioFile(file: File): boolean {
-  const ext = '.' + file.name.toLowerCase().split('.').pop();
-  return ACCEPTED_MIME.includes(file.type) || ACCEPTED_EXTS.includes(ext);
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-export default function LandingContent({ onSubmit, onFileSubmit, error }: LandingContentProps) {
-  const [mode, setMode] = useState<'url' | 'file'>('url');
-  const [url, setUrl] = useState('');
-  const [showHints, setShowHints] = useState(false);
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const [showGdriveGuide, setShowGdriveGuide] = useState(false);
-  const [dragOver, setDragOver] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const submitUrl = useCallback(() => {
-    setValidationError(null);
-    onSubmit(url.trim());
-  }, [url, onSubmit]);
-
-  const handleSubmitUrl = useCallback(() => {
-    const trimmed = url.trim();
-    if (!trimmed) { setValidationError('URL is required.'); return; }
-    if (!isValidAudioUrl(trimmed)) { setValidationError('Invalid URL. Must start with https:// or http://'); return; }
-    if (isGdriveUrl(trimmed) && !isGdriveGuideDismissed()) { setShowGdriveGuide(true); return; }
-    setValidationError(null);
-    onSubmit(trimmed);
-  }, [url, onSubmit]);
-
-  const handleFileSelect = useCallback((file: File) => {
-    if (!isValidAudioFile(file)) {
-      setValidationError(`Unsupported format. Accepted: WAV, FLAC, AIFF, MP3`);
-      return;
-    }
-    if (file.size > 200 * 1024 * 1024) {
-      setValidationError('File too large. Maximum size is 200MB.');
-      return;
-    }
-    setValidationError(null);
-    setSelectedFile(file);
-  }, []);
-
-  const handleSubmitFile = useCallback(() => {
-    if (!selectedFile) { setValidationError('Please select an audio file.'); return; }
-    onFileSubmit(selectedFile);
-  }, [selectedFile, onFileSubmit]);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file) handleFileSelect(file);
-  }, [handleFileSelect]);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleSubmitUrl();
-  }, [handleSubmitUrl]);
-
-  const displayError = validationError || error;
-
+export default function LandingContent({ onSubmit, error }: { onSubmit: (url: string) => void; error?: string | null }) {
   return (
-    <div className="w-full min-h-screen flex flex-col items-center justify-center px-6 py-20 relative overflow-hidden">
-      {/* Background glow */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full bg-indigo-600/10 blur-[120px]" />
-        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[300px] rounded-full bg-violet-600/8 blur-[100px]" />
-      </div>
+    <div className="bg-[#0a0a0a] text-zinc-100 flex flex-col w-full">
+      <main className="flex-1 w-full">
+        <WebApplicationJsonLd />
+        <OrganizationJsonLd />
 
-      {/* Grid overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.03]"
-        style={{
-          backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
-          backgroundSize: '60px 60px',
-        }}
-      />
-
-      <div className="relative z-10 w-full max-w-3xl mx-auto flex flex-col items-center gap-10">
-        {/* Logo */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
-          className="flex flex-col items-center gap-4"
-        >
-          <div className="relative">
-            <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center backdrop-blur">
-              <div className="w-6 h-6 bg-indigo-400 rounded-full shadow-[0_0_20px_rgba(99,102,241,0.8)]" />
-            </div>
-            <div className="absolute -inset-1 rounded-2xl bg-indigo-500/10 blur-md -z-10" />
-          </div>
-          <div className="text-center">
-            <p className="font-mono text-xs tracking-[0.3em] text-indigo-400 uppercase mb-1">WhitePrint</p>
-            <h1 className="text-5xl font-mono font-bold tracking-tighter text-white">AudioEngine</h1>
-          </div>
-        </motion.div>
-
-        {/* Tagline */}
-        <motion.p
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15, ease: [0.23, 1, 0.32, 1] }}
-          className="text-zinc-400 text-base font-mono text-center max-w-xl leading-relaxed"
-        >
-          AI-powered mastering with BS.1770-4 loudness analysis.
-          <br />
-          Multi-LLM ensemble deliberation · 14-stage DSP pipeline.
-        </motion.p>
-
-        {/* Feature pills */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.25, ease: [0.23, 1, 0.32, 1] }}
-          className="flex flex-wrap items-center justify-center gap-3"
-        >
-          {FEATURES.map(({ icon: Icon, label, desc }) => (
-            <div key={label} className="flex items-center gap-2 px-4 py-2 rounded-full border border-zinc-800 bg-zinc-900/60 backdrop-blur">
-              <Icon className="w-3.5 h-3.5 text-indigo-400" />
-              <span className="text-xs font-mono text-zinc-300">{label}</span>
-              <span className="text-xs font-mono text-zinc-600 hidden sm:inline">· {desc}</span>
-            </div>
-          ))}
-        </motion.div>
-
-        {/* Main input card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.35, ease: [0.23, 1, 0.32, 1] }}
-          className="w-full"
-        >
-          {/* Mode switcher */}
-          <div className="flex gap-1 mb-3 p-1 rounded-lg bg-zinc-900 border border-zinc-800 w-fit mx-auto">
-            <button
-              onClick={() => { setMode('url'); setValidationError(null); }}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-mono transition-all ${mode === 'url' ? 'bg-indigo-600 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
-            >
-              <Link2 className="w-3.5 h-3.5" /> URL
-            </button>
-            <button
-              onClick={() => { setMode('file'); setValidationError(null); }}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-mono transition-all ${mode === 'file' ? 'bg-indigo-600 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
-            >
-              <Upload className="w-3.5 h-3.5" /> LOCAL FILE
-            </button>
-          </div>
-
-          <div className="relative overflow-hidden rounded-xl border-2 border-zinc-800 bg-zinc-900/50 backdrop-blur-sm transition-all duration-300 focus-within:border-indigo-500 focus-within:shadow-[0_0_60px_rgba(99,102,241,0.12)]">
-            <div className="p-8 flex flex-col gap-5">
-              <AnimatePresence mode="wait">
-                {mode === 'url' ? (
-                  <motion.div key="url-mode" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col gap-5">
-                    {/* URL input */}
-                    <div className="flex items-center gap-3">
-                      <div className="p-3 rounded-full bg-zinc-800 text-zinc-400 shrink-0">
-                        <Link2 className="w-5 h-5" />
-                      </div>
-                      <input
-                        type="url"
-                        value={url}
-                        onChange={(e) => setUrl(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder="https://suno.com/s/... or https://drive.google.com/..."
-                        className="flex-1 bg-transparent text-zinc-100 font-mono text-sm placeholder:text-zinc-600 focus:outline-none"
-                        autoFocus
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between gap-4">
-                      <button
-                        type="button"
-                        onClick={() => setShowHints(!showHints)}
-                        className="flex items-center gap-1.5 text-xs font-mono text-zinc-500 hover:text-zinc-300 transition-colors"
-                      >
-                        {showHints ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                        SUPPORTED_PROVIDERS
-                      </button>
-                      <button
-                        onClick={handleSubmitUrl}
-                        disabled={!url.trim()}
-                        className="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:bg-zinc-800 disabled:text-zinc-600 text-white text-sm font-mono font-bold rounded-lg transition-all duration-150"
-                      >
-                        ANALYZE
-                      </button>
-                    </div>
-
-                    <AnimatePresence>
-                      {showHints && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                          className="border-t border-zinc-800 pt-4 space-y-2 overflow-hidden"
-                        >
-                          {PROVIDER_HINTS.map((p) => (
-                            <div key={p.name} className="flex items-start gap-2">
-                              <span className="font-mono text-xs text-indigo-400 shrink-0 w-24">{p.name}</span>
-                              <span className="font-mono text-xs text-zinc-500">{p.hint}</span>
-                            </div>
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                ) : (
-                  <motion.div key="file-mode" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col gap-5">
-                    {/* Drop zone */}
-                    <div
-                      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                      onDragLeave={() => setDragOver(false)}
-                      onDrop={handleDrop}
-                      onClick={() => !selectedFile && fileInputRef.current?.click()}
-                      className={`relative flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-10 cursor-pointer transition-all duration-200 ${
-                        dragOver
-                          ? 'border-indigo-500 bg-indigo-500/10'
-                          : selectedFile
-                          ? 'border-emerald-500/50 bg-emerald-500/5 cursor-default'
-                          : 'border-zinc-700 hover:border-zinc-500 hover:bg-zinc-800/30'
-                      }`}
-                    >
-                      {selectedFile ? (
-                        <>
-                          <div className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
-                            <FileAudio className="w-6 h-6 text-emerald-400" />
-                          </div>
-                          <div className="text-center">
-                            <p className="font-mono text-sm text-zinc-100 truncate max-w-xs">{selectedFile.name}</p>
-                            <p className="font-mono text-xs text-zinc-500 mt-1">{formatBytes(selectedFile.size)}</p>
-                          </div>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setSelectedFile(null); setValidationError(null); }}
-                            className="absolute top-3 right-3 p-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center">
-                            <Upload className="w-6 h-6 text-zinc-400" />
-                          </div>
-                          <div className="text-center">
-                            <p className="font-mono text-sm text-zinc-300">Drop your audio file here</p>
-                            <p className="font-mono text-xs text-zinc-600 mt-1">or click to browse · WAV, FLAC, AIFF, MP3 · max 200MB</p>
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept={ACCEPTED_EXTS.join(',')}
-                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }}
-                      className="hidden"
-                    />
-
-                    <div className="flex justify-end">
-                      <button
-                        onClick={handleSubmitFile}
-                        disabled={!selectedFile}
-                        className="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:bg-zinc-800 disabled:text-zinc-600 text-white text-sm font-mono font-bold rounded-lg transition-all duration-150"
-                      >
-                        ANALYZE
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Corner accents */}
-            <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-zinc-700 opacity-50 m-2" />
-            <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-zinc-700 opacity-50 m-2" />
-            <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-zinc-700 opacity-50 m-2" />
-            <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-zinc-700 opacity-50 m-2" />
-          </div>
-        </motion.div>
-
-        {/* Error */}
-        <AnimatePresence>
-          {displayError && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="w-full p-4 rounded-lg bg-red-500/10 border border-red-500/20 flex items-start gap-3"
-            >
-              <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-sm font-mono font-semibold text-red-400">ANALYSIS_FAILED</h4>
-                <div className="text-xs font-mono text-red-300/80 mt-1 whitespace-pre-line">{displayError}</div>
+        {/* Hero */}
+        <section className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/5 via-transparent to-transparent" />
+          <div className="max-w-7xl mx-auto px-6 pt-24 pb-20 relative">
+            <div className="max-w-3xl mx-auto text-center space-y-8">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-xs text-indigo-300 font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+                AI Dynamic Mastering Engine
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white leading-tight">
+                Listen. You&apos;ll hear it.
+                <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">
+                  3 AIs deliberate. Your track evolves.
+                </span>
+              </h1>
+              <p className="text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+                Three AI models independently analyze your audio, debate the ideal parameters,
+                and reach consensus — section by section. Every decision is transparent.
+                <br />
+                Black-box mastering is over.
+              </p>
+              
+              <div className="space-y-4">
+                <HeroUrlInput onSubmit={onSubmit} />
+                {error && (
+                  <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg text-sm max-w-2xl mx-auto flex items-start gap-3 text-left">
+                    <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                      <strong className="block font-medium mb-0.5">Analysis Failed</strong>
+                      {error}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-zinc-600 max-w-md mx-auto">
+                Upload your audio to Google Drive, set sharing to &quot;Anyone with the link&quot;, and paste the URL.
+                <br />
+                We do not store your audio. Files are processed in memory and immediately discarded.
+              </p>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-          className="text-xs font-mono text-zinc-600 text-center"
-        >
-          Professional mastering · URL or local file · WAV · FLAC · AIFF · MP3
-        </motion.p>
-      </div>
+              {/* Terminal / API hint */}
+              <div className="max-w-xl mx-auto mt-6 rounded-lg border border-zinc-800/60 bg-zinc-950/80 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-800/40 bg-zinc-900/30">
+                  <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Terminal</span>
+                  <Link href="/developers/docs/quickstart" className="text-[10px] font-mono text-indigo-400 hover:text-indigo-300 transition-colors">
+                    Full API Docs →
+                  </Link>
+                </div>
+                <pre className="px-4 py-3 text-[11px] font-mono text-emerald-400/80 overflow-x-auto whitespace-pre leading-relaxed">
+{`curl -X POST https://concertmaster.aimastering.tech/api/v1/jobs/master \\
+  -H "X-Api-Key: YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"audio_url":"https://drive.google.com/...","route":"full"}' \\
+  -o mastered.wav`}
+                </pre>
+              </div>
 
-      <GdriveGuideModal
-        open={showGdriveGuide}
-        onConfirm={() => { setShowGdriveGuide(false); submitUrl(); }}
-        onClose={() => setShowGdriveGuide(false)}
-      />
+              <div className="flex items-center justify-center gap-6 mt-4">
+                <Link
+                  href="/features/deliberation"
+                  className="text-sm text-zinc-500 hover:text-indigo-400 transition-colors group"
+                >
+                  See AI deliberation in action
+                  <span className="inline-block ml-1 group-hover:translate-x-1 transition-transform">&rarr;</span>
+                </Link>
+                <span className="text-zinc-800">|</span>
+                <Link
+                  href="/developers"
+                  className="text-sm text-zinc-500 hover:text-indigo-400 transition-colors group"
+                >
+                  REST API &amp; SDK
+                  <span className="inline-block ml-1 group-hover:translate-x-1 transition-transform">&rarr;</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Stats */}
+        <section className="border-y border-zinc-800/50">
+          <div className="max-w-7xl mx-auto px-6 py-12">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              {stats.map((stat) => (
+                <div key={stat.label} className="text-center">
+                  <div className="text-2xl font-bold text-white font-mono">{stat.value}</div>
+                  <div className="text-sm text-zinc-500 mt-1">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Features */}
+        <section className="py-24">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-bold text-white">Why WhitePrint is different</h2>
+              <p className="mt-4 text-zinc-400 max-w-2xl mx-auto">
+                Other AI mastering returns a result. WhitePrint shows you the reason.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-8">
+              {features.map((feature) => (
+                <Link
+                  key={feature.title}
+                  href={feature.href}
+                  className="group p-8 rounded-xl border border-zinc-800 hover:border-indigo-500/50 bg-zinc-950 transition-all hover:bg-zinc-900/50"
+                >
+                  <div className="w-12 h-12 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-6 group-hover:bg-indigo-500/20 transition-colors">
+                    {feature.icon}
+                  </div>
+                  <div className="text-xs font-mono text-indigo-400/70 mb-2">{feature.subtitle}</div>
+                  <h3 className="text-lg font-bold text-white mb-3 group-hover:text-indigo-300 transition-colors">
+                    {feature.title}
+                    <span className="inline-block ml-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">&rarr;</span>
+                  </h3>
+                  <p className="text-sm text-zinc-400 leading-relaxed">{feature.description}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* How It Works */}
+        <section className="py-24 border-t border-zinc-800/50">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-bold text-white">Paste a URL. Wait. Done.</h2>
+              <p className="mt-4 text-zinc-400">No file upload. No plugins. No sessions.</p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-12">
+              {[
+                {
+                  step: '01',
+                  title: 'Paste a cloud URL',
+                  desc: 'Google Drive, Dropbox, OneDrive, S3, GCS. Just paste the link — we fetch your audio directly.',
+                },
+                {
+                  step: '02',
+                  title: 'AIs analyze, deliberate, decide',
+                  desc: 'BS.1770-4 physical analysis runs first. Then three AIs independently deliberate and vote on section-by-section parameters.',
+                },
+                {
+                  step: '03',
+                  title: 'Download your master',
+                  desc: 'Consensus-driven DSP processing completes. WAV download with before/after metrics and full deliberation logs.',
+                },
+              ].map((item) => (
+                <div key={item.step} className="text-center">
+                  <div className="text-4xl font-mono font-bold text-indigo-500/30 mb-4">
+                    {item.step}
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
+                  <p className="text-sm text-zinc-400">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Differentiator */}
+        <section className="py-24 border-t border-zinc-800/50">
+          <div className="max-w-4xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-bold text-white">
+                &ldquo;Sounds good&rdquo; isn&apos;t good enough.
+              </h2>
+              <p className="mt-4 text-zinc-400">
+                Every parameter has a reason. Every decision has evidence.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              {[
+                {
+                  label: 'Other AI Mastering',
+                  items: [
+                    'Audio in, result out. Black box.',
+                    'No explanation of what changed or why',
+                    'No parameter control',
+                    'Same processing for the entire track',
+                  ],
+                  bad: true,
+                },
+                {
+                  label: 'WhitePrint',
+                  items: [
+                    '3 AIs independently recommend parameters with rationale',
+                    'Full deliberation logs — see where they agree and disagree',
+                    'Override any DSP parameter manually',
+                    'Dynamic section-based mastering that follows the music',
+                  ],
+                  bad: false,
+                },
+              ].map((col) => (
+                <div
+                  key={col.label}
+                  className={`p-8 rounded-xl border ${
+                    col.bad
+                      ? 'border-zinc-800 bg-zinc-950'
+                      : 'border-indigo-500/50 bg-indigo-500/5'
+                  }`}
+                >
+                  <h3 className={`text-sm font-bold uppercase tracking-wider mb-6 ${
+                    col.bad ? 'text-zinc-500' : 'text-indigo-400'
+                  }`}>
+                    {col.label}
+                  </h3>
+                  <ul className="space-y-3">
+                    {col.items.map((item) => (
+                      <li key={item} className="flex items-start gap-3 text-sm">
+                        {col.bad ? (
+                          <span className="text-zinc-600 mt-0.5">&#x2715;</span>
+                        ) : (
+                          <span className="text-indigo-400 mt-0.5">&#x2713;</span>
+                        )}
+                        <span className={col.bad ? 'text-zinc-500' : 'text-zinc-300'}>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section className="py-24">
+          <div className="max-w-3xl mx-auto px-6 text-center space-y-8">
+            <h2 className="text-3xl font-bold text-white">
+              Try it on your own track.
+            </h2>
+            <p className="text-zinc-400">
+              Free. No signup. No credit card. Just listen.
+            </p>
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              <button
+                onClick={() => {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg transition-colors"
+              >
+                Master Now
+              </button>
+              <Link
+                href="/pricing"
+                className="px-8 py-3.5 border border-zinc-700 hover:border-zinc-500 text-zinc-300 hover:text-white rounded-lg transition-colors"
+              >
+                View Pricing
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

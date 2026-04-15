@@ -22,19 +22,22 @@ const MESSAGES = [
   { sage: 0, text: 'Consensus reached. Preparing adopted parameters...' },
 ];
 
-export default function DeliberatingScreen() {
-  const [visibleMessages, setVisibleMessages] = useState<number[]>([]);
+export default function DeliberatingScreen({ error }: { error?: string | null }) {
+  const [visibleMessages, setVisibleMessages] = useState<{ idx: number; uid: number }[]>([]);
   const [activeSage, setActiveSage] = useState(0);
 
   useEffect(() => {
     let i = 0;
+    let uid = 0;
     const interval = setInterval(() => {
       if (i < MESSAGES.length) {
-        setVisibleMessages((prev) => [...prev, i]);
+        const currentI = i;
+        const currentUid = uid;
+        setVisibleMessages((prev) => [...prev, { idx: currentI, uid: currentUid }]);
         setActiveSage(MESSAGES[i].sage);
         i++;
+        uid++;
       } else {
-        // Loop back
         i = 0;
         setVisibleMessages([]);
       }
@@ -93,14 +96,14 @@ export default function DeliberatingScreen() {
 
         <div className="flex flex-col justify-end h-full space-y-2 overflow-hidden">
           <AnimatePresence mode="popLayout">
-            {visibleMessages.slice(-5).map((msgIdx) => {
-              const msg = MESSAGES[msgIdx];
+            {visibleMessages.slice(-5).map((item) => {
+              const msg = MESSAGES[item.idx];
               if (!msg) return null;
               const sage = SAGES[msg.sage];
               if (!sage) return null;
               return (
                 <motion.div
-                  key={`${msgIdx}-${Math.floor(visibleMessages.length / MESSAGES.length)}`}
+                  key={item.uid}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}

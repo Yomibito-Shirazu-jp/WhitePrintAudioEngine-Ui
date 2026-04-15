@@ -24,7 +24,7 @@ export default function InteractiveCurl() {
   }, [apiKey, audioUrl]);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(curl);
+    navigator.clipboard.writeText(curl).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

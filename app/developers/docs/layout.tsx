@@ -1,16 +1,17 @@
 import Link from 'next/link';
-import SiteHeader from '@/components/site-header';
+import MarketingHeader from '@/components/layout/marketing-header';
 
 const sidebarLinks = [
   { href: '/developers/docs/quickstart', label: 'Quickstart' },
   { href: '/developers/docs/reference', label: 'API Reference' },
   { href: '/developers/docs/examples', label: 'Code Examples' },
+  { href: '/developers/docs/specification', label: 'Technical Specification' },
 ];
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-100">
-      <SiteHeader />
+      <MarketingHeader />
       <div className="max-w-7xl mx-auto px-6 py-12 flex gap-12">
         <aside className="hidden lg:block w-56 flex-shrink-0">
           <div className="sticky top-24 space-y-1">

@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-const CONCERTMASTER_URL = process.env.CONCERTMASTER_URL || 'https://concertmaster.aimastering.tech';
+const CONCERTMASTER_URL = (process.env.CONCERTMASTER_URL || 'https://whiteprintaudioengine-concertmaster-git-270124753853.asia-northeast1.run.app').replace(/\/+$/, '');
 const CONCERTMASTER_API_KEY = process.env.CONCERTMASTER_API_KEY || '';
 
 // Free plan limits (no billing record = free)
 const FREE_TRACKS_LIMIT = 3;
+
+export const maxDuration = 600; // 10 minutes max duration for Vercel Pro
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   if (!CONCERTMASTER_API_KEY) {
@@ -63,9 +66,12 @@ export async function POST(request: NextRequest) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 600_000);
 
+    const targetUrl = `${CONCERTMASTER_URL}/api/v1/jobs/master`;
+    console.log(`[master] Fetching: ${targetUrl} | Key prefix: ${CONCERTMASTER_API_KEY?.substring(0, 12)}...`);
+
     let response: Response;
     try {
-      response = await fetch(`${CONCERTMASTER_URL}/api/v1/jobs/master`, {
+      response = await fetch(targetUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -74,8 +80,11 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify(body),
         signal: controller.signal,
       });
+      console.log(`[master] Backend responded: ${response.status} ${response.statusText} | Content-Type: ${response.headers.get('content-type')}`);
     } catch (err) {
       clearTimeout(timeout);
+      const errMsg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+      console.error(`[master] Fetch threw: ${errMsg} | URL: ${targetUrl}`);
       if (err instanceof DOMException && err.name === 'AbortError') {
         return NextResponse.json(
           { error: 'Backend request timed out after 10 minutes.' },
@@ -91,21 +100,40 @@ export async function POST(request: NextRequest) {
     if (contentType.includes('audio/')) {
       const audioBuffer = await response.arrayBuffer();
 
+      // Upload to Supabase Storage to bypass Vercel 4.5MB Payload limit
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Ensure the audio uses a valid unique filename
+      const fileName = `${user ? user.id : 'guest'}/${Date.now()}-master.wav`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('audio-uploads')
+        .upload(fileName, audioBuffer, {
+          contentType: 'audio/wav',
+          upsert: true
+        });
+
+      if (uploadError) {
+        console.error('Failed to upload mastered audio to Supabase Storage:', uploadError);
+        return NextResponse.json({ error: 'Failed to save mastered audio to storage' }, { status: 500 });
+      }
+
+      const { data: publicUrlData } = supabase.storage.from('audio-uploads').getPublicUrl(fileName);
+
       // Increment usage for successful mastering
       if (isMasteringRoute) {
         await incrementUsage(request);
       }
 
-      return new NextResponse(audioBuffer, {
-        status: response.status,
-        headers: {
-          'Content-Type': contentType,
-          'X-Route': response.headers.get('X-Route') || '',
-          'X-Elapsed-Ms': response.headers.get('X-Elapsed-Ms') || '',
-          'X-Analysis': response.headers.get('X-Analysis') || '',
-          'X-Deliberation': response.headers.get('X-Deliberation') || '',
-          'X-Metrics': response.headers.get('X-Metrics') || '',
-        },
+      const metricsRaw = response.headers.get('X-Metrics') || '{}';
+      let parsedMetrics = {};
+      try { parsedMetrics = JSON.parse(metricsRaw); } catch { /* ignore */ }
+
+      return NextResponse.json({
+        route: response.headers.get('X-Route') || 'full',
+        download_url: publicUrlData.publicUrl,
+        metrics: parsedMetrics,
       });
     }
 
@@ -113,6 +141,7 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const raw = data.detail || data.error || `Backend error: ${response.status}`;
+      console.error(`[master] Backend ${response.status}: ${raw} | URL: ${CONCERTMASTER_URL} | Key prefix: ${CONCERTMASTER_API_KEY?.substring(0, 10)}...`);
       const friendly = humanizeError(raw, response.status);
       return NextResponse.json(
         { error: friendly, detail: raw },
@@ -128,6 +157,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown proxy error';
+    console.error(`[master] Proxy error: ${message} | URL: ${CONCERTMASTER_URL} | Key set: ${!!CONCERTMASTER_API_KEY}`);
     return NextResponse.json(
       { error: `Failed to reach backend: ${message}` },
       { status: 502 }
