@@ -4,11 +4,11 @@
   "devCommand": "npm run dev",
   "installCommand": "npm ci --legacy-peer-deps",
   "functions": {
-    "app/api/master/route.ts": {
-      "maxDuration": 300
-    },
     "app/api/upload/route.ts": {
-      "maxDuration": 300
+      "maxDuration": 120
+    },
+    "app/api/master/route.ts": {
+      "maxDuration": 600
     }
   }
 }
