@@ -15,11 +15,18 @@ COPY . .
 # Build-time public env vars (baked into the static bundle)
 ARG NEXT_PUBLIC_SUPABASE_URL=https://aytbujigrvjwdmgxzlyk.supabase.co
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5dGJ1amlncnZqd2RtZ3h6bHlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyMTY4NjQsImV4cCI6MjA4Nzc5Mjg2NH0.kbXnOQoas7yD8jdmgLStHRixgZczL7wv-ILElD1xfwo
-ARG NEXT_PUBLIC_BASE_URL=https://whiteprint.audio
+ARG NEXT_PUBLIC_BASE_URL=https://whitepprint-ui-270124753853.asia-northeast1.run.app
 
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL
+
+# Runtime env vars (server-side, injected at deploy time via Cloud Run env vars)
+ENV CONCERTMASTER_URL=https://whiteprintaudioengine-concertmaster-270124753853.asia-northeast1.run.app
+ENV AUDITION_URL=https://whiteprintaudioengine-audition-git-270124753853.asia-northeast1.run.app
+ENV DELIBERATION_URL=https://whiteprintaudioengine-deliberation-270124753853.asia-northeast1.run.app
+ENV RENDITION_DSP_URL=https://whiteprintaudioengine-rendition-dsp-270124753853.asia-northeast1.run.app
+
 
 # Disable Next.js telemetry during build
 ENV NEXT_TELEMETRY_DISABLED=1
