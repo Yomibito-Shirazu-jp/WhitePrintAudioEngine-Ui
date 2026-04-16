@@ -101,8 +101,8 @@ export async function postMasterBinary(body: Record<string, unknown>): Promise<{
 
 // Concertmaster Cloud Run — no body size limit (Vercel has 4.5MB limit)
 const CONCERTMASTER_UPLOAD_URL =
-  process.env.NEXT_PUBLIC_CONCERTMASTER_URL ||
-  'https://whiteprintaudioengine-concertmaster-pdw36wmy5q-an.a.run.app';
+  (process.env.NEXT_PUBLIC_CONCERTMASTER_URL ||
+  'https://whiteprintaudioengine-concertmaster-pdw36wmy5q-an.a.run.app').trim();
 
 /** Helper: upload file to GCS via Concertmaster Cloud Run */
 async function uploadToGCS(file: File): Promise<string> {
